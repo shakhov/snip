@@ -61,6 +61,14 @@
      :Ar (fnk {{:keys [n d]} :reinf}
               (* n 1/4 Math/PI d d))
      
+     :Ar-stc (fnk
+               [Ar nc]
+               (* Ar (- 1 (/ nc))))
+     
+     :Ar-stc-creep (fnk
+                     [Ar nc-creep]
+                     (* Ar (- 1 (/ nc-creep))))
+     
      :Ar-crack (fnk 
                  [Ar psi-crack]
                  (/ Ar psi-crack))
@@ -73,12 +81,12 @@
      
      
      :Astc (fnk
-             [Asl-red Ast Ar]
-             (+ Ast Asl-red Ar))
+             [Asl-red Ast Ar-stc]
+             (+ Ast Asl-red Ar-stc))
      
      :Astc-creep (fnk
-                   [Asl-red-creep Ast Ar]
-                   (+ Ast Asl-red-creep Ar))
+                   [Asl-red-creep Ast Ar-stc-creep]
+                   (+ Ast Asl-red-creep Ar-stc-creep))
      
      :Astc-crack (fnk
                    [Ast Ar-crack]
@@ -120,16 +128,16 @@
                             (concat Zw-tf Zw-bf))))
      
      :Sw-stc (fnk
-               [Sw-st Asl-red Zw-sl Ar Zw-r]
+               [Sw-st Asl-red Zw-sl Ar-stc Zw-r]
                (+ Sw-st
-                  (* Ar Zw-r)
+                  (* Ar-stc Zw-r)
                   (* Asl-red Zw-sl)))
      
      
      :Sw-stc-creep (fnk
-                     [Sw-st Asl-red-creep Zw-sl Ar Zw-r]
+                     [Sw-st Asl-red-creep Zw-sl Ar-stc-creep Zw-r]
                      (+ Sw-st
-                        (* Ar Zw-r)
+                        (* Ar-stc-creep Zw-r)
                         (* Asl-red-creep Zw-sl)))
      
      :Sw-stc-crack (fnk
@@ -167,18 +175,18 @@
                                (concat Zw-tf Zw-bf))))) 
      
      :Iw-stc (fnk
-               [Iw-st Zw-sl slab nc Ar Zw-r Asl]
+               [Iw-st Zw-sl slab nc Ar-stc Zw-r Asl]
                (let [{:keys [b h]} slab]
                  (+ Iw-st
-                    (* Ar Zw-r Zw-r)
+                    (* Ar-stc Zw-r Zw-r)
                     (/ (I-rect {:h h :b b :dz Zw-sl})
                        nc))))
      
      :Iw-stc-creep (fnk
-                     [Iw-st Zw-sl slab nc-creep Ar Zw-r Asl]
+                     [Iw-st Zw-sl slab nc-creep Ar-stc-creep Zw-r Asl]
                      (let [{:keys [b h]} slab]
                        (+ Iw-st
-                          (* Ar Zw-r Zw-r)
+                          (* Ar-stc-creep Zw-r Zw-r)
                           (/ (I-rect {:h h :b b :dz Zw-sl})
                              nc-creep))))
      
