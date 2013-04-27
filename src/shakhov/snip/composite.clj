@@ -218,42 +218,47 @@
      :EI-stc-crack (fnk [Istc-crack Est] (* Istc-crack Est))
      
      ;; Z
+     :Zs2-w (fnk 
+              [top-flange web]
+              (- (apply + (/ (:h web) 2)
+                        (map :t top-flange))))
+     
+     :Zs1-w (fnk 
+              [bottom-flange web]
+              (apply + (/ (:h web) 2)
+                     (map :t bottom-flange)))
      
      :Zs2-st (fnk 
-               [top-flange web dZw-st]
-               (- (- (apply + (/ (:h web) 2)
-                            (map :t top-flange)))
-                  dZw-st))
+               [Zs2-w dZw-st]
+               (- Zs2-w dZw-st))
      
      :Zs1-st (fnk 
-               [bottom-flange web dZw-st]
-               (- (apply + (/ (:h web) 2)
-                         (map :t bottom-flange))
-                  dZw-st))
+               [Zs1-w dZw-st]
+               (- Zs1-w dZw-st))
      
      :Zs2-stc (fnk 
-                [top-flange web dZw-stc]
-                (- (- (apply + (/ (:h web) 2)
-                             (map :t top-flange)))
-                   dZw-stc))
+                [Zs2-w dZw-stc]
+                (- Zs2-w dZw-stc))
      
      :Zs1-stc(fnk 
-               [bottom-flange web dZw-stc]
-               (- (apply + (/ (:h web) 2)
-                         (map :t bottom-flange))
-                  dZw-stc))
+               [Zs1-w dZw-stc]
+               (- Zs1-w dZw-stc))
      
      :Zs2-stc-crack (fnk 
-                      [top-flange web dZw-stc-crack]
-                      (- (- (apply + (/ (:h web) 2)
-                                   (map :t top-flange)))
-                         dZw-stc-crack))
+                      [Zs2-w dZw-stc-crack]
+                      (- Zs2-w dZw-stc-crack))
      
      :Zs1-stc-crack (fnk 
-                      [bottom-flange web dZw-stc-crack]
-                      (- (apply + (/ (:h web) 2)
-                                (map :t bottom-flange))
-                         dZw-stc-crack))
+                      [Zs1-w dZw-stc-crack]
+                      (- Zs1-w dZw-stc-crack))
+     
+     :Zs2-stc-creep (fnk 
+                      [Zs2-w dZw-stc-creep]
+                      (- Zs2-w dZw-stc-creep))
+     
+     :Zs1-stc-creep (fnk 
+                      [Zs1-w dZw-stc-creep]
+                      (- Zs1-w dZw-stc-creep))
      
      :Zc-st  (fnk 
                [Zw-sl dZw-st]
@@ -296,6 +301,18 @@
      :Ws2-stc (fnk
                [Zs2-stc Istc]
                (/ Istc Zs2-stc))
+     
+     :Wc-stc-creep (fnk
+                     [Zc-stc-creep Istc-creep]
+                     (/ Istc-creep Zc-stc-creep))
+     
+     :Ws1-stc-creep (fnk
+                      [Zs1-stc-creep Istc-creep]
+                      (/ Istc-creep Zs1-stc-creep))
+     
+     :Ws2-stc-creep (fnk
+                      [Zs2-stc-creep Istc-creep]
+                      (/ Istc-creep Zs2-stc-creep))
      
      :Wr-stc-crack (fnk
                       [Zr-stc-crack Istc-crack]
