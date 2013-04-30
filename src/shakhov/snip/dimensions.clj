@@ -15,7 +15,7 @@
   speed [length 1 time -1]
   acceleration [speed 1 time -1]
   force [mass 1 acceleration 1]
-;  pressure [force 1 area -1]
+  pressure [force 1 area -1]
   stress [force 1 area -1]
   frequency [time -1]
   energy [force 1 length 1]
