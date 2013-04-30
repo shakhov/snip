@@ -1,5 +1,13 @@
 (ns shakhov.snip.composite
-  (:use [shakhov.flow.core]))
+  (:refer-clojure :exclude [time force + - * / < > <= >= = zero? pos? neg? sgn abs
+                            sin cos tan asin acos atan exp log min max])
+  (:use [shakhov.flow.core])
+  (:use [clojure.algo.generic.arithmetic :only [+ - * /]]
+        [clojure.algo.generic.comparison :only [< > <= >= = zero? pos? neg? min max]]
+        [clojure.algo.generic.math-functions :only [pow sqrt sgn abs sin cos tan 
+                                                    asin acos atan exp log]])
+  (:require [shakhov.snip.dimensions :as dim]
+            [shakhov.snip.units :as si]))
 
 ;;
 ;;  Utilities
@@ -11,15 +19,40 @@
      ret#))
 
 (def ^:private I-rect
-  (fnk {:keys [b h dz] :or {dz 0.0}}
-       (+ (* 1/12 b h h h)
-          (* b h dz dz))))
+  (fnk {:keys [b h dz] :or {dz nil}}
+       (let [dz (or dz (h 0.0))]
+         (+ (* 1/12 b h h h)
+            (* b h dz dz)))))
 
 (defn- clip
   [{xmin :min xmax :max} x]
   (let [x (if xmin (max xmin x) x)
         x (if xmax (min xmax x) x)]
     x))
+
+(defn- logger-printer
+  [x]
+  (cond
+    (number? x) (format "%g" (double x))
+    (sequential? x) 
+    (str "[" (apply str (interpose "; " (for [a x] (logger-printer a)))) "]")
+    :else (str x)))
+
+(defn- pre-logger
+  [f k i]
+  (println (str (name k)
+                (let [inputs (fnk-inputs (f k) f)
+                      inputs (:shakhov.flow.core/required-keys inputs)]
+                  (when (seq inputs)
+                    (str " ( "
+                    (apply str (interpose "; " 
+                                          (map (fn [[k v]] (str (name k))) 
+                                               (select-keys i inputs))))
+                    " )"))))))
+
+(defn- post-logger
+  [f k i o]
+  (println (str (name k) " = " (logger-printer o))))
 
 (defn- table-2d
   [{:keys [xp yp data clip]}]
@@ -503,8 +536,8 @@
      :Smin-st
      (fnk
        [Stf-st Sbf-st]
-       (min (Math/abs Stf-st)
-            (Math/abs Sbf-st)))
+       (min (abs Stf-st)
+            (abs Sbf-st)))
      
      :box?
      (fnk [] false)}))
@@ -521,7 +554,7 @@
        (clip {:min 0.0 :max ae1}
              (if (<= tau-m (* 0.25 Rs))
                ae1
-               (* ae1 (/ (+ (Math/sqrt (- 1 (* alpha alpha)))
+               (* ae1 (/ (+ (sqrt (- 1 (* alpha alpha)))
                             (* 2 a b))
                          (+ 1 (* 2 a)))))))
      
@@ -594,11 +627,13 @@
     {:sigma-c 
      (fnk
        [M2 nc Wc-stc]
+       {:post [(dim/stress? %)]}
        (/ M2 nc Wc-stc))
      
      :sigma-r
      (fnk
        [M2 Wr-stc]
+       {:post [(dim/stress? %)]}
        (/ M2 Wr-stc))
      
      :M 
@@ -608,12 +643,14 @@
      
      :sigma-s2
      (fnk [M Zc-st Ncr ae4 Ws2-st Ast]
+          {:post [(dim/stress? %)]}
           (+ (/ (+ M (* Zc-st Ncr))
                 (* ae4 Ws2-st))
              (/ Ncr Ast)))
      
      :sigma-s1
      (fnk [M Zc-st Ncr ae3 Ws1-st Ast]
+          {:post [(dim/stress? %)]}
           (+ (/ (+ M (* Zc-st Ncr))
                 (* ae3 Ws1-st))
              (/ Ncr Ast)))
@@ -652,7 +689,7 @@
        [Atf Abf Ncr Ast m Ry Ncr]
        (let [kA (/ (min Atf Abf) 
                    (max Atf Abf))
-             kN (/ (Math/abs Ncr)
+             kN (/ (abs Ncr)
                    (* Ast m Ry))
              eta-above (table-2d 
                          {:clip #{:l :r :t :b}
