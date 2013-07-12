@@ -105,6 +105,13 @@
        [Est Ec]
        (/ Est Ec))
      
+     :nr 
+     (fnk 
+       {:keys [Est Er] :or {Er nil}}
+       (if Er
+         (/ Est Er)
+         1.0))
+     
      :Ec-creep 
      (fnk
        [Ec phi-creep]
@@ -149,8 +156,9 @@
      :Asl 
      (fnk
        [slab Ar]
-       (* (:b slab)
-          (:h slab)))
+       (- (* (:b slab)
+             (:h slab))
+          Ar))
      
      :Asl-red 
      (fnk
@@ -165,16 +173,6 @@
      :Ar 
      (fnk {{:keys [n d]} :reinf}
           (* n 1/4 Math/PI d d))
-     
-     :Ar-stc 
-     (fnk
-       [Ar nc]
-       (* Ar (- 1 (/ nc))))
-     
-     :Ar-stc-creep 
-     (fnk
-       [Ar nc-creep]
-       (* Ar (- 1 (/ nc-creep))))
      
      :Ar-crack 
      (fnk 
@@ -191,13 +189,13 @@
      
      :Astc 
      (fnk
-       [Asl-red Ast Ar-stc]
-       (+ Ast Asl-red Ar-stc))
+       [Asl-red Ast Ar]
+       (+ Ast Asl-red Ar))
      
      :Astc-creep 
      (fnk
-       [Asl-red-creep Ast Ar-stc-creep]
-       (+ Ast Asl-red-creep Ar-stc-creep))
+       [Asl-red-creep Ast Ar]
+       (+ Ast Asl-red-creep Ar))
      
      :Astc-crack 
      (fnk
@@ -247,16 +245,16 @@
      
      :Sw-stc 
      (fnk
-       [Sw-st Asl-red Zw-sl Ar-stc Zw-r]
+       [Sw-st Asl-red Zw-sl Ar Zw-r]
        (+ Sw-st
-          (* Ar-stc Zw-r)
+          (* Ar Zw-r)
           (* Asl-red Zw-sl)))
           
      :Sw-stc-creep 
      (fnk
-       [Sw-st Asl-red-creep Zw-sl Ar-stc-creep Zw-r]
+       [Sw-st Asl-red-creep Zw-sl Ar Zw-r]
        (+ Sw-st
-          (* Ar-stc-creep Zw-r)
+          (* Ar Zw-r)
           (* Asl-red-creep Zw-sl)))
      
      :Sw-stc-crack 
@@ -289,6 +287,11 @@
      
      ;; Iw
      
+     :Ic 
+     (fnk 
+       {{:keys [h b]} :slab}
+       (I-rect {:h h :b b :dz (si/m 0)}))
+     
      :Iw-st 
      (fnk
        [top-flange web bottom-flange Zw-tf Zw-bf]
@@ -300,19 +303,19 @@
      
      :Iw-stc 
      (fnk
-       [Iw-st Zw-sl slab nc Ar-stc Zw-r Asl]
+       [Iw-st Zw-sl slab nr nc Ar Zw-r Ic]
        (let [{:keys [b h]} slab]
          (+ Iw-st
-            (* Ar-stc Zw-r Zw-r)
+            (* Ar (- (/ nr) (/ nc)) Zw-r Zw-r)
             (/ (I-rect {:h h :b b :dz Zw-sl})
                nc))))
      
      :Iw-stc-creep 
      (fnk
-       [Iw-st Zw-sl slab nc-creep Ar-stc-creep Zw-r Asl]
+       [Iw-st Zw-sl slab nr nc-creep Ar Zw-r]
        (let [{:keys [b h]} slab]
          (+ Iw-st
-            (* Ar-stc-creep Zw-r Zw-r)
+            (* Ar (- (/ nr) (/ nc-creep)) Zw-r Zw-r)
             (/ (I-rect {:h h :b b :dz Zw-sl})
                nc-creep))))
      
@@ -321,7 +324,8 @@
        [Iw-st Zw-r Ar-crack]
        (+ Iw-st
           (* Ar-crack Zw-r Zw-r)))
-     ;; Ist
+     
+     ;; I
      
      :Ist 
      (fnk
@@ -342,6 +346,13 @@
      (fnk
        [Iw-stc-crack dZw-stc-crack Astc-crack]
        (- Iw-stc-crack (* Astc-crack dZw-stc-crack dZw-stc-crack)))
+     
+     ;; EI
+     
+     :EI-c
+     (fnk
+       [Ic Ec]
+       (* Ec Ic))
      
      :EI-st 
      (fnk 
@@ -441,6 +452,16 @@
      (fnk
        [Zw-r dZw-stc-crack]
        (- Zw-r dZw-stc-crack))
+     
+     :Zc-stc-crack 
+     (fnk
+       [Zw-sl dZw-stc-crack]
+       (- Zw-sl dZw-stc-crack))
+     
+     :Zr-st
+     (fnk
+       [Zw-r dZw-st]
+       (- Zw-r dZw-st))
      
      ;; W
      
@@ -622,19 +643,66 @@
        (/ (* Rs m ae2 Ist tw)
           Smax-st))}))
 
+(def ^:private lazy-ae
+  (lazy-compile ae))
+
+(def eta      
+  (fnk
+    [Atf Abf Ast m Ry N]
+    (let [kA (/ (min Atf Abf) 
+                (max Atf Abf))
+          kN (/ (abs N)
+                (* Ast m Ry))
+          eta-above (table-2d 
+                      {:clip #{:l :r :t :b}
+                       :xp [0.0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.7]
+                       :yp [0 0.2 0.4 0.6 0.8 1.0]
+                       :data [[1.00 1.00 1.00 1.00 1.00 1.00 0.99 0.98 0.96 0.95 0.92 0.88 0.83 0.87 0.63]
+                              [1.00 1.00 1.00 1.02 1.03 1.04 1.05 1.06 1.07 1.06 1.05 1.02 0.99 0.90 0.75]
+                              [1.00 1.04 1.08 1.12 1.14 1.16 1.19 1.20 1.21 1.20 1.18 1.16 1.13 1.09 1.04]
+                              [1.00 1.10 1.19 1.28 1.35 1.40 1.44 1.46 1.47 1.46 1.45 1.42 1.39 1.35 1.30]
+                              [1.00 1.20 1.39 1.55 1.70 1.83 1.93 1.98 2.00 2.02 2.01 1.99 1.97 1.91 1.84]
+                              [1.00 1.29 1.63 2.04 2.47 2.86 3.20 3.38 3.49 3.56 3.57 3.53 3.43 3.29 3.05]]})
+          eta-below (table-2d 
+                      {:clip #{:l :r :t :b}
+                       :xp [0.0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.7]
+                       :yp [0 0.2 0.4 0.6 0.8 1.0]
+                       :data [[1.00 0.98 0.94 0.90 0.87 0.81 0.75 0.67 0.58 0.45 0.28 0.52 0.68 0.76 0.82]
+                              [1.00 0.97 0.92 0.87 0.80 0.70 0.57 0.38 0.49 0.61 0.72 0.82 0.91 0.99 1.05]
+                              [1.00 0.90 0.80 0.67 0.52 0.34 0.53 0.68 0.84 0.98 1.12 1.22 1.30 1.38 1.42]
+                              [1.00 0.84 0.64 0.40 0.56 0.75 0.95 1.13 1.30 1.45 1.58 1.69 1.76 1.84 1.90]
+                              [1.00 0.61 0.51 0.84 1.12 1.36 1.60 1.86 2.08 2.29 2.47 2.52 2.50 2.46 2.38]
+                              [1.00 1.29 1.63 2.04 2.47 2.86 3.20 3.38 3.49 3.56 3.57 3.53 3.43 3.29 3.05]]})]
+      (if (> Atf Abf)
+        (eta-above kN kA)
+        (eta-below kN kA)))))
+
 (def case-A
   (flow 
-    {:sigma-c 
+    {:valid-case-A 
+     (fnk 
+       [Rc mc sigma-c sigma-r mr Rr EI-st EI-c]
+       (if (and (neg? sigma-c)
+                (< (abs sigma-c) (* mc Rc))
+                (neg? sigma-r)
+                (< (abs sigma-r) (* mr Rr))
+                (<= EI-c (* 0.2 EI-st)))
+         true
+         false))
+     
+     :sigma-c 
      (fnk
-       [M2 nc Wc-stc]
+       [M2 nc Wc-stc sigma-ci]
        {:post [(dim/stress? %)]}
-       (/ M2 nc Wc-stc))
+       (+ (/ M2 nc Wc-stc)
+          sigma-ci))
      
      :sigma-r
      (fnk
-       [M2 Wr-stc]
+       [M2 Wr-stc sigma-ri nr]
        {:post [(dim/stress? %)]}
-       (/ M2 Wr-stc))
+       (+ (/ M2 Wr-stc nr)
+          sigma-ri))
      
      :M 
      (fnk
@@ -661,10 +729,9 @@
                 (* Ar sigma-r))))
      
      :ae
-     (let [lazy-ae (lazy-compile ae)]
-       (fnk 
-         {:keys [Abf Atf Aw Ast Ist gamma-m Ryn Smin-st Smax-st web box?] :as args}
-         (:ae (lazy-ae (merge args {:tw (:t web) :hw (:h web)})))))
+     (fnk 
+       {:keys [Abf Atf Aw Ast Ist gamma-m Ryn Smin-st Smax-st web box?] :as args}
+       (:ae (lazy-ae (merge args {:tw (:t web) :hw (:h web)}))))
      
      :ae4 
      (fnk
@@ -680,40 +747,14 @@
      (fnk
        [m Ry mc Rc sigma-c Asl Atf]
        (clip {:max 1.2}
-             (+ 1  (* (/ (- (* mc Rc) sigma-c)
-                         (* m Ry))
-                      (/ Asl Atf)))))
+             (+ 1 (* (/ (- (* mc Rc) sigma-c)
+                        (* m Ry))
+                     (/ Asl Atf)))))
      
      :eta 
      (fnk
-       [Atf Abf Ncr Ast m Ry Ncr]
-       (let [kA (/ (min Atf Abf) 
-                   (max Atf Abf))
-             kN (/ (abs Ncr)
-                   (* Ast m Ry))
-             eta-above (table-2d 
-                         {:clip #{:l :r :t :b}
-                          :xp [0.0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.7]
-                          :yp [0 0.2 0.4 0.6 0.8 1.0]
-                          :data [[1.00 1.00 1.00 1.00 1.00 1.00 0.99 0.98 0.96 0.95 0.92 0.88 0.83 0.87 0.63]
-                                 [1.00 1.00 1.00 1.02 1.03 1.04 1.05 1.06 1.07 1.06 1.05 1.02 0.99 0.90 0.75]
-                                 [1.00 1.04 1.08 1.12 1.14 1.16 1.19 1.20 1.21 1.20 1.18 1.16 1.13 1.09 1.04]
-                                 [1.00 1.10 1.19 1.28 1.35 1.40 1.44 1.46 1.47 1.46 1.45 1.42 1.39 1.35 1.30]
-                                 [1.00 1.20 1.39 1.55 1.70 1.83 1.93 1.98 2.00 2.02 2.01 1.99 1.97 1.91 1.84]
-                                 [1.00 1.29 1.63 2.04 2.47 2.86 3.20 3.38 3.49 3.56 3.57 3.53 3.43 3.29 3.05]]})
-             eta-below (table-2d 
-                         {:clip #{:l :r :t :b}
-                          :xp [0.0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.7]
-                          :yp [0 0.2 0.4 0.6 0.8 1.0]
-                          :data [[1.00 0.98 0.94 0.90 0.87 0.81 0.75 0.67 0.58 0.45 0.28 0.52 0.68 0.76 0.82]
-                                 [1.00 0.97 0.92 0.87 0.80 0.70 0.57 0.38 0.49 0.61 0.72 0.82 0.91 0.99 1.05]
-                                 [1.00 0.90 0.80 0.67 0.52 0.34 0.53 0.68 0.84 0.98 1.12 1.22 1.30 1.38 1.42]
-                                 [1.00 0.84 0.64 0.40 0.56 0.75 0.95 1.13 1.30 1.45 1.58 1.69 1.76 1.84 1.90]
-                                 [1.00 0.61 0.51 0.84 1.12 1.36 1.60 1.86 2.08 2.29 2.47 2.52 2.50 2.46 2.38]
-                                 [1.00 1.29 1.63 2.04 2.47 2.86 3.20 3.38 3.49 3.56 3.57 3.53 3.43 3.29 3.05]]})]
-         (if (<= Abf Abf)
-           (eta-above kN kA)
-           (eta-below kN kA))))
+       {:keys [Atf Abf Ast m Ry Ncr] :as input}
+       (eta (merge input {:N Ncr})))
      
      :m1mRy
      (fnk 
@@ -724,3 +765,87 @@
      (fnk 
        [m Ry]
        (* m Ry))}))
+
+
+(def case-E
+  (flow
+    {:valid-case-E 
+     (fnk 
+       [Rc mc sigma-c]
+       (if (and (pos? sigma-c)
+                (>= sigma-c (* 0.1 mc Rc)))
+         true
+         false))
+     
+     :sigma-c 
+     (fnk
+       [M2 nc Wc-stc sigma-ci]
+       {:post [(dim/stress? %)]}
+       (+ (/ M2 nc Wc-stc)
+          sigma-ci))
+     
+     :sigma-r
+     (fnk
+       [M2 sigma-ri sigma-ci 
+        Astc-crack Wr-stc-crack 
+        Zc-stc-crack Zr-stc-crack
+        Asl psi-crack nr ]
+       {:post [(dim/stress? %)]}
+       (+ (/ (+ M2 (* Zc-stc-crack Asl sigma-ci))
+             (* psi-crack nr Wr-stc-crack))
+          (/ (* Asl sigma-ci)
+             (* psi-crack nr Astc-crack))
+          sigma-ri))
+     
+     :M 
+     (fnk
+       [M1 M2]
+       (+ M1 M2))
+     
+     :sigma-s2
+     (fnk [M Zr-st NrR ae3-s2 Ws2-st Ast]
+          {:post [(dim/stress? %)]}
+          (- (/ (- M (* Zr-st NrR))
+                (* ae3-s2 Ws2-st))
+             (/ NrR Ast)))
+     
+     :sigma-s1
+     (fnk [M Zr-st Nr ae3-s1 Ws1-st Ast]
+          {:post [(dim/stress? %)]}
+          (- (/ (- M (* Zr-st Nr))
+                (* ae3-s1 Ws1-st))
+             (/ Nr Ast)))
+     
+     :NrR 
+     (fnk [Ar Rr]
+          (* Ar Rr))
+     
+     :Nr 
+     (fnk [Ar sigma-r Rr]
+          (min (* Ar sigma-r)
+               (* Ar Rr)))
+     
+     :ae
+     (fnk 
+       {:keys [Abf Atf Aw Ast Ist gamma-m Ryn Smin-st Smax-st web box?] :as args}
+       (:ae (lazy-ae (merge args {:tw (:t web) :hw (:h web)}))))
+     
+     :ae3-s2
+     (fnk
+       [ae eta-s2]
+       (+ 1 (* eta-s2 (- ae 1))))
+     
+     :ae3-s1
+     (fnk 
+       [ae eta-s1]
+       (+ 1 (* eta-s1 (- ae 1))))
+
+     :eta-s2 
+     (fnk
+       {:keys [Atf Abf Ast m Ry NrR] :as input}
+       (eta (merge input {:N NrR})))
+     
+     :eta-s1 
+     (fnk
+       {:keys [Atf Abf Ast m Ry Nr] :as input}
+       (eta (merge input {:N Nr})))}))
