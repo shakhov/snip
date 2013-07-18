@@ -1,7 +1,10 @@
 (ns shakhov.snip.composite
   (:refer-clojure :exclude [time force + - * / < > <= >= = zero? pos? neg? sgn abs
                             sin cos tan asin acos atan exp log min max])
-  (:use [shakhov.flow.core])
+  
+  (:use [shakhov.flow.core]
+        [shakhov.snip.utils])
+  
   (:use [clojure.algo.generic.arithmetic :only [+ - * /]]
         [clojure.algo.generic.comparison :only [< > <= >= = zero? pos? neg? min max]]
         [clojure.algo.generic.math-functions :only [pow sqrt sgn abs sin cos tan 
@@ -13,86 +16,11 @@
 ;;  Utilities
 ;;
 
-(defmacro dbg [x]
-  `(let [ret# (do ~x)]
-     (prn (str '~x " = " ret#))
-     ret#))
-
 (def ^:private I-rect
   (fnk {:keys [b h dz] :or {dz nil}}
        (let [dz (or dz (h 0.0))]
          (+ (* 1/12 b h h h)
             (* b h dz dz)))))
-
-(defn- clip
-  [{xmin :min xmax :max} x]
-  (let [x (if xmin (max xmin x) x)
-        x (if xmax (min xmax x) x)]
-    x))
-
-(defn- logger-printer
-  [x]
-  (cond
-    (number? x) (format "%g" (double x))
-    (sequential? x) 
-    (str "[" (apply str (interpose "; " (for [a x] (logger-printer a)))) "]")
-    :else (str x)))
-
-(defn- pre-logger
-  [f k i]
-  (println (str (name k)
-                (let [inputs (fnk-inputs (f k) f)
-                      inputs (:shakhov.flow.core/required-keys inputs)]
-                  (when (seq inputs)
-                    (str " ( "
-                    (apply str (interpose "; " 
-                                          (map (fn [[k v]] (str (name k))) 
-                                               (select-keys i inputs))))
-                    " )"))))))
-
-(defn- post-logger
-  [f k i o]
-  (println (str (name k) " = " (logger-printer o))))
-
-(defn- table-2d
-  [{:keys [xp yp data clip]}]
-  (fn [x y]
-    (let [i1 (dec (count (take-while #(< % x) xp)))
-          i2 (inc i1)
-          i1 (if (= i1 -1) 
-               (if (:l clip) 0 1)
-               i1)
-          i2 (if (= i2 (count xp)) 
-               (if (:r clip) (- i2 1) (- i2 2)) 
-               i2)
-          j1 (dec (count (take-while #(< % y) yp)))
-          j2 (inc j1)
-          j1 (if (= j1 -1) 
-               (if (:t clip) 0 1) j1)
-          j2 (if (= j2 (count yp)) 
-               (if (:b clip) (- j2 1) (- j2 2)) 
-               j2)
-          x1 (get xp i1)
-          x2 (get xp i2)
-          y1 (get yp j1)
-          y2 (get yp j2)
-          dx (- x2 x1)
-          dy (- y2 y1)
-          dxdy (* dx dy)
-          d11 (get-in data [j1 i1])
-          d21 (get-in data [j1 i2])
-          d12 (get-in data [j2 i1])
-          d22 (get-in data [j2 i2])]
-      (if (zero? dxdy)
-        (cond (and (zero? dx) (zero? dy)) d11
-              (zero? dx) (+ (* d11 (/ (- y2 y ) dy))
-                            (* d12 (/ (- y  y1) dy)))
-              (zero? dy) (+ (* d11 (/ (- x2 x ) dx))
-                            (* d21 (/ (- x  x1) dx))))
-        (+ (* d11 (/ (* (- x2 x ) (- y2 y )) dxdy))
-           (* d21 (/ (* (- x  x1) (- y2 y )) dxdy))
-           (* d12 (/ (* (- x2 x ) (- y  y1)) dxdy))
-           (* d22 (/ (* (- x  x1) (- y  y1)) dxdy)))))))
 
 ;;
 ;; Steel concrete composite
@@ -107,10 +35,8 @@
      
      :nr 
      (fnk 
-       {:keys [Est Er] :or {Er nil}}
-       (if Er
-         (/ Est Er)
-         1.0))
+       [Est Er]
+       (/ Est Er))
      
      :Ec-creep 
      (fnk
@@ -679,7 +605,8 @@
 
 (def case-A
   (flow 
-    {:valid-case-A 
+    {:case (fnk [] :A)
+     :valid-case-A 
      (fnk 
        [Rc mc sigma-c sigma-r mr Rr EI-st EI-c]
        (if (and (neg? sigma-c)
@@ -769,7 +696,8 @@
 
 (def case-E
   (flow
-    {:valid-case-E 
+    {:case (fnk [] :E)
+     :valid-case-E 
      (fnk 
        [Rc mc sigma-c]
        (if (and (pos? sigma-c)
@@ -849,3 +777,17 @@
      (fnk
        {:keys [Atf Abf Ast m Ry Nr] :as input}
        (eta (merge input {:N Nr})))}))
+
+(let [I-cs-geometry (lazy-compile I-cs-geometry)
+      case-A (lazy-compile case-A)
+      case-E (lazy-compile case-E)]
+  
+  (def composite
+    (fnk 
+      [cs forces steel concrete rebar]
+      (let [geometry (I-cs-geometry (merge cs steel concrete rebar))
+            A (case-A (merge geometry forces))
+            E (case-E (merge geometry forces))]
+        (cond
+          (:valid-case-A A) A
+          (:valid-case-E E) E)))))
