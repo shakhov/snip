@@ -43,10 +43,20 @@
        [Ec phi-creep]
        (/ Ec (+ 1 phi-creep)))
      
+     :Ec-shr
+     (fnk 
+       [Ec]
+       (* 0.5 Ec))
+     
      :nc-creep 
      (fnk
        [Est Ec-creep]
        (/ Est Ec-creep))
+     
+     :nc-shr
+     (fnk
+       [Est Ec-shr]
+       (/ Est Ec-shr))
      
      :psi-crack 
      (fnk [] 0.5)
@@ -96,14 +106,24 @@
        [Asl nc-creep]
        (/ Asl nc-creep))
      
+     :Asl-red-shr
+     (fnk
+       [Asl nc-shr]
+       (/ Asl nc-shr))
+     
      :Ar 
      (fnk {{:keys [n d]} :reinf}
           (* n 1/4 Math/PI d d))
      
+     :Ar-red
+     (fnk
+       [Ar nr]
+       (/ Ar nr))
+     
      :Ar-crack 
      (fnk 
-       [Ar psi-crack]
-       (/ Ar psi-crack))
+       [Ar-red psi-crack]
+       (/ Ar-red psi-crack))
      
      ;; A
      
@@ -112,22 +132,31 @@
        [Atf Abf Aw]
        (+ Atf Aw Abf))
      
+     :Astr
+     (fnk
+       [Ast Ar-red]
+       (+ Ast Ar-red))
      
      :Astc 
      (fnk
-       [Asl-red Ast Ar]
-       (+ Ast Asl-red Ar))
+       [Asl-red Ast Ar-red]
+       (+ Ast Asl-red Ar-red))
      
      :Astc-creep 
      (fnk
-       [Asl-red-creep Ast Ar]
-       (+ Ast Asl-red-creep Ar))
+       [Asl-red-creep Ast Ar-red]
+       (+ Ast Asl-red-creep Ar-red))
+     
+     :Astc-shr
+     (fnk
+       [Asl-red-shr Ast Ar-red]
+       (+ Ast Asl-red-shr Ar-red))
      
      :Astc-crack 
      (fnk
        [Ast Ar-crack]
        (+ Ast Ar-crack))
-     
+          
      ;; Zw
      
      :Zw-tf 
@@ -169,19 +198,32 @@
                      (concat Atf-i Abf-i)
                      (concat Zw-tf Zw-bf))))
      
+     :Sw-str
+     (fnk
+       [Sw-st Ar-red Zw-r nr]
+       (+ Sw-st 
+          (* Ar-red Zw-r)))
+     
      :Sw-stc 
      (fnk
-       [Sw-st Asl-red Zw-sl Ar Zw-r]
+       [Sw-st Asl-red Zw-sl Ar-red Zw-r]
        (+ Sw-st
-          (* Ar Zw-r)
+          (* Ar-red Zw-r)
           (* Asl-red Zw-sl)))
           
      :Sw-stc-creep 
      (fnk
-       [Sw-st Asl-red-creep Zw-sl Ar Zw-r]
+       [Sw-st Asl-red-creep Zw-sl Ar-red Zw-r]
        (+ Sw-st
-          (* Ar Zw-r)
+          (* Ar-red Zw-r)
           (* Asl-red-creep Zw-sl)))
+     
+     :Sw-stc-shr
+     (fnk
+       [Sw-st Asl-red-shr Zw-sl Ar-red Zw-r]
+       (+ Sw-st
+          (* Ar-red Zw-r)
+          (* Asl-red-shr Zw-sl)))
      
      :Sw-stc-crack 
      (fnk
@@ -196,6 +238,11 @@
        [Sw-st Ast]
        (/ Sw-st Ast))
      
+     :dZw-str 
+     (fnk
+       [Sw-str Astr]
+       (/ Sw-str Astr))
+     
      :dZw-stc 
      (fnk
        [Sw-stc Astc]
@@ -205,6 +252,11 @@
      (fnk
        [Sw-stc-creep Astc-creep]
        (/ Sw-stc-creep Astc-creep))
+     
+     :dZw-stc-shr
+     (fnk
+       [Sw-stc-shr Astc-shr]
+       (/ Sw-stc-shr Astc-shr))
      
      :dZw-stc-crack 
      (fnk
@@ -227,6 +279,12 @@
                         (concat top-flange bottom-flange)
                         (concat Zw-tf Zw-bf))))) 
      
+     :Iw-str
+     (fnk
+       [Iw-st Ar-red Zw-r]
+       (+ Iw-st
+          (* Ar-red Zw-r Zw-r))) 
+     
      :Iw-stc 
      (fnk
        [Iw-st Zw-sl slab nr nc Ar Zw-r Ic]
@@ -245,6 +303,15 @@
             (/ (I-rect {:h h :b b :dz Zw-sl})
                nc-creep))))
      
+     :Iw-stc-shr
+     (fnk
+       [Iw-st Zw-sl slab nr nc-shr Ar Zw-r]
+       (let [{:keys [b h]} slab]
+         (+ Iw-st
+            (* Ar (- (/ nr) (/ nc-shr)) Zw-r Zw-r)
+            (/ (I-rect {:h h :b b :dz Zw-sl})
+               nc-shr))))
+     
      :Iw-stc-crack 
      (fnk
        [Iw-st Zw-r Ar-crack]
@@ -258,6 +325,11 @@
        [Iw-st dZw-st Ast]
        (- Iw-st (* Ast dZw-st dZw-st)))
      
+     :Istr 
+     (fnk
+       [Iw-str dZw-str Astr]
+       (- Iw-str (* Astr dZw-str dZw-str)))
+     
      :Istc 
      (fnk
        [Iw-stc dZw-stc Astc]
@@ -267,6 +339,11 @@
      (fnk
        [Iw-stc-creep dZw-stc-creep Astc-creep]
        (- Iw-stc-creep (* Astc-creep dZw-stc-creep dZw-stc-creep)))
+     
+     :Istc-shr
+     (fnk
+       [Iw-stc-shr dZw-stc-shr Astc-shr]
+       (- Iw-stc-shr (* Astc-shr dZw-stc-shr dZw-stc-shr)))
      
      :Istc-crack 
      (fnk
@@ -359,6 +436,11 @@
        [Zw-sl dZw-st]
        (- Zw-sl dZw-st))
      
+     :Zc-str
+     (fnk 
+       [Zw-sl dZw-str]
+       (- Zw-sl dZw-str))
+     
      :Zc-stc 
      (fnk
        [Zw-sl dZw-stc]
@@ -373,6 +455,11 @@
      (fnk 
        [Zw-sl dZw-stc-creep]
        (- Zw-sl dZw-stc-creep))
+     
+     :Zc-stc-shr  
+     (fnk 
+       [Zw-sl dZw-stc-shr]
+       (- Zw-sl dZw-stc-shr))
      
      :Zr-stc-crack 
      (fnk
@@ -490,7 +577,7 @@
      (fnk [] false)}))
 
 ;;  
-;;   Cases
+;;   ae, eta
 ;;
 
 (def ae
@@ -569,8 +656,7 @@
        (/ (* Rs m ae2 Ist tw)
           Smax-st))}))
 
-(def ^:private lazy-ae
-  (lazy-compile ae))
+(def ^:private lazy-ae (lazy-compile ae))
 
 (def eta      
   (fnk
@@ -602,6 +688,10 @@
       (if (> Atf Abf)
         (eta-above kN kA)
         (eta-below kN kA)))))
+
+;;
+;;   Cases
+;;
 
 (def case-A
   (flow 
@@ -693,7 +783,6 @@
        [m Ry]
        (* m Ry))}))
 
-
 (def case-E
   (flow
     {:case (fnk [] :E)
@@ -777,17 +866,98 @@
      (fnk
        {:keys [Atf Abf Ast m Ry Nr] :as input}
        (eta (merge input {:N Nr})))}))
+ 
+;;
+;; Creep, shrinkage, temperature
+;;
 
-(let [I-cs-geometry (lazy-compile I-cs-geometry)
-      case-A (lazy-compile case-A)
-      case-E (lazy-compile case-E)]
-  
-  (def composite
-    (fnk 
-      [cs forces steel concrete rebar]
-      (let [geometry (I-cs-geometry (merge cs steel concrete rebar))
-            A (case-A (merge geometry forces))
-            E (case-E (merge geometry forces))]
-        (cond
-          (:valid-case-A A) A
-          (:valid-case-E E) E)))))
+(def creep
+  (flow 
+    {:sigma-c-cr 
+     (fnk 
+       [alpha sigma-c]
+       (- (* alpha sigma-c)))
+     
+     :alpha 
+     (fnk
+       [phi-cr v]
+       (/ phi-cr
+          (+ (* 0.5 phi-cr) v 1)))
+     
+     :v 
+     (fnk
+       [Asl-red Astr Zc-str Istr]
+       (* Asl-red
+          (+ (/ Astr)
+             (/ (pow Zc-str 2)
+                Istr))))
+     
+     :phi-cr
+     (fnk 
+       [gamma-f cn-lim Ec]
+       (* gamma-f Ec cn-lim))
+     
+     :gamma-f (fnk [] 1.1)
+     
+     :cn-lim
+     (fnk
+       [cn xi1 xi2 xi3 xi4]
+       (* cn xi1 xi2 xi3 xi4))
+     
+     :xi1 
+     (fnk
+       [Rcl:Rc]
+       ((table-1d 
+          {:xp [0.5 0.6 0.7 0.8 0.9 1.0]
+           :clip #{:l :r}
+           :data [1.7 1.6 1.4 1.25 1.15 1.0]})
+         Rcl:Rc))
+     
+     :xi2
+     (fnk
+       [load-age]
+       ((table-1d 
+          {:xp [3 7 28 60 90 180 360]
+           :clip #{:l :r}
+           :data [1 1 1 0.8 0.7 0.6 0.5]})
+         load-age))
+     
+     :xi3
+     (fnk
+       [Asl slab]
+       ((table-1d 
+          {:xp [2.5 5.0 7.5 10.0 12.5 15.0 20.0]
+           :clip #{:l :r}
+           :data [1 0.85 0.76 0.72 0.69 0.67 0.64]})
+         (:magnitude (si/cm (/ Asl (* 2 (+ (:h slab) (:b slab)))))) ))
+     
+     :xi4
+     (fnk
+       [H]
+       ((table-1d 
+              {:xp [40 50 60 70 80 90 100]
+               :clip #{:l :r}
+               :data [1.33 1.25 1.15 1.0 0.85 0.7 0.51]})
+         H))}))
+
+(def shrinkage
+  (flow
+    {:eps-shr
+     (fnk [] 2e-4)
+     
+     :sigma-c-shr
+     (fnk
+       [eps-shr Ec-shr Astr Astc-shr Sshr Istc-shr Zc-stc-shr]
+       (* eps-shr Ec-shr
+          (+ (/ Astr Astc-shr)
+             (* (/ Sshr Istc-shr) Zc-stc-shr))))
+     
+     :Sshr
+     (fnk
+       [Astr Zstr-stc-shr]
+       (* Astr Zstr-stc-shr))
+     
+     :Zstr-stc-shr
+     (fnk
+       [dZw-str dZw-stc-shr]
+       (- dZw-str dZw-stc-shr))}))
