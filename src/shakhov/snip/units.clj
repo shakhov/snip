@@ -36,8 +36,12 @@
 
 (def-unit 
   civil-units
+  kgf:cm3 (/ kgf cm cm cm)
+  tonf:m3 (/ tonf m m m)
   kgf:cm2 (/ kgf cm cm)
   tonf:m2 (/ tonf m m)
+  kgf:cm (/ kgf cm)
+  tonf:m (/ tonf m)
   kN*m (* kN m)
   MN*m (* MN m)
   tonf*m (* tonf m))
