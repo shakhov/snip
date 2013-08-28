@@ -45,3 +45,13 @@
            (* d21 (/ (* (- x  x1) (- y2 y )) dxdy))
            (* d12 (/ (* (- x2 x ) (- y  y1)) dxdy))
            (* d22 (/ (* (- x  x1) (- y  y1)) dxdy)))))))
+
+(defn table-1d
+  [{:keys [xp data clip]}]
+  (fn [x]
+    ((table-2d
+      {:xp xp
+       :yp [0]
+       :data [data]
+       :clip (into clip #{:t :b})})
+      x 0)))
