@@ -7,7 +7,7 @@
     x))
 
 (defn table-2d
-  [{:keys [xp yp data clip]}]
+  [{:keys [xp yp data clip] :or {clip #{:l :r :t :b}}}]
   (fn [x y]
     (let [i1 (dec (count (take-while #(< % x) xp)))
           i2 (inc i1)
@@ -47,7 +47,7 @@
            (* d22 (/ (* (- x  x1) (- y  y1)) dxdy)))))))
 
 (defn table-1d
-  [{:keys [xp data clip]}]
+  [{:keys [xp data clip] :or {clip #{:l :r}}}]
   (fn [x]
     ((table-2d
       {:xp xp
