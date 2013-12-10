@@ -1,17 +1,17 @@
-(ns shakhov.snip.steel  
+(ns shakhov.snip.steel
   (:refer-clojure :exclude [time force + - * / < > <= >= = zero? pos? neg? sgn abs
                             sin cos tan asin acos atan exp log min max])
-  
+
   (:use [shakhov.flow.core]
         [shakhov.snip.utils])
-  
+
   (:use [clojure.algo.generic.arithmetic :only [+ - * /]]
         [clojure.algo.generic.comparison :only [< > <= >= = zero? pos? neg? min max]]
-        [clojure.algo.generic.math-functions :only [pow sqrt sgn abs sin cos tan 
+        [clojure.algo.generic.math-functions :only [pow sqrt sgn abs sin cos tan
                                                     asin acos atan exp log]])
   (:require [shakhov.snip.dimensions :as dim]
             [shakhov.snip.units :as si])
-  
+
   (:use [shakhov.snip.pprint]))
 
 ;;;;;;; ae
@@ -27,14 +27,14 @@
                (* ae1 (/ (+ (sqrt (- 1 (* alpha alpha)))
                             (* 2 a b))
                          (+ 1 (* 2 a)))))))
-     
+
      :ae1
      (fnk
        [Atf Abf Aw Ast]
        (let [Af-min (min Atf Abf)
              x (/ (+ Af-min Aw) Ast)
              y (/ Af-min Aw)
-             table-61 (table-2d 
+             table-61 (table-2d
                         {:xp [0.01 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
                          :yp [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0 4.0 5.0]
                          :clip #{:l :r :t :b}
@@ -54,205 +54,40 @@
                                 [1.019 1.019 1.020 1.021 1.021 1.022 1.015 1.015 1.015 1.015 1.015]
                                 [1.015 1.015 1.016 1.017 1.018 1.018 1.018 1.018 1.018 1.018 1.018]]})]
          (table-61 x y)))
-     
+
      :ae2
      (fnk
        [Smax Smin]
        (- 1.25 (* 0.25 (/ Smin Smax))))
-     
+
      :Rs
      (fnk
        [Ryn gamma-m]
        (/ (* 0.58 Ryn)
           gamma-m))
-     
+
      :tau-m
-     (fnk 
+     (fnk
        [Q hw tw]
        (/ Q hw tw))
-     
-     :alpha 
-     (fnk 
+
+     :alpha
+     (fnk
        [Q Qu]
        (/ Q Qu))
-     
+
      :a
      (fnk
        [Atf Abf Aw]
        (/ (+ Atf Abf) Aw))
-     
-     :b 
+
+     :b
      (fnk
        [alpha box?]
        (Math/sqrt (- 1 (* (if box? 0.0625 0.25) alpha alpha))))
-     
+
      :Qu
      (fnk
        [Rs m ae2 Ist tw Smax]
        (/ (* Rs m ae2 Ist tw)
           Smax))}))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
-;(def bolted-connection
-;  (flow
-;    {:Qbh
-;     (fnk
-;       [P mu gamma-bh n]
-;       (/ (* n P mu) 
-;          gamma-bh))
-;     
-;     :P
-;     (fnk
-;       [Rbh mbh Abn]
-;       (* Rbh mbh Abn))
-;     
-;     :mbh 
-;     (fnk 
-;       []
-;       0.95)
-;     
-;     :Rbh
-;     (fnk
-;       [Rbun]
-;       (* 0.7 Rbun))
-;     
-;     :Abn
-;     (fnk
-;       [d]
-;       (* (/ Math/PI 4) 
-;          (pow d 2)))}))
-;
-;(defn phi-buckl
-;  [steel lambda e-ef]
-;  (case steel
-;    :st-15HSND ((table-2d 
-;                        {:xp [0.0]
-;                         :yp [0 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200]
-;                         :clip #{:l :r :t :b}
-;                         :data [[0.93] 
-;                                [0.92] 
-;                                [0.90] 
-;                                [0.88] 
-;                                [0.85] 
-;                                [0.80] 
-;                                [0.74] 
-;                                [0.67] 
-;                                [0.58] 
-;                                [0.48] 
-;                                [0.40] 
-;                                [0.35] 
-;                                [0.30] 
-;                                [0.27] 
-;                                [0.24] 
-;                                [0.22] 
-;                                [0.20] 
-;                                [0.18] 
-;                                [0.16] 
-;                                [0.15] 
-;                                [0.13]]})
-;                 e-ef lambda)))
-;
-;(def bearing-rib
-;  (flow
-;    {:l-ef
-;     (fnk 
-;       [hw mu]
-;       (* hw mu))
-;     
-;     :mu 
-;     (fnk [] 2.0)
-;     
-;     :bw-ef
-;     (fnk
-;       [tw s1]
-;       (* tw s1))
-;     
-;     :Aw 
-;     (fnk 
-;       [tw bw-ef]
-;       (* tw bw-ef))
-;     
-;     :Iw
-;     (fnk
-;       [tw bw-ef]
-;       (* 1/12 bw-ef tw tw tw))
-;     
-;     :Ar
-;     (fnk
-;       [ribs]
-;       (apply + (for [{:keys [br tr]} ribs]
-;                  (* br tr))))
-;     
-;     :Ir
-;     (fnk
-;       [ribs]
-;       (apply + (for [{:keys [br tr]} ribs]
-;                  (* 1/3 br br br tr))))
-;     
-;     :A
-;     (fnk
-;       [Ar Aw]
-;       (+ Ar Aw))
-;     
-;     :I
-;     (fnk
-;       [Ir Iw]
-;       (+ Ir Iw))
-;     
-;     :i 
-;     (fnk
-;       [I A]
-;       (sqrt (/ I A)))
-;     
-;     :lambda
-;     (fnk
-;       [l-ef i]
-;       (/ l-ef i))
-;     
-;     :sigma
-;     (fnk 
-;       [N A]
-;       (/ N A))
-;     
-;     :phi 
-;     (fnk 
-;       [lambda]
-;       (phi-buckl :st-15HSND lambda 0.0))
-;     
-;     :phi-Ry
-;     (fnk
-;       [Ry phi]
-;       (* phi Ry))
-;     
-;     :K
-;     (fnk
-;       [sigma phi-Ry]
-;       (/ phi-Ry sigma))}))
-;
-;(println
-;  (table
-;    {:cols [{:key :d :title "d, mm" :format (format-units si/mm "%.0f")}
-;            {:key :Abh :title "Abh, cm^2" :format (format-units (pow si/cm 2) "%.2f")}
-;            {:key :Rbh :title "Rbh, MPa" :format (format-units si/MPa "%.1f")}
-;            {:key :mbh :format #(format "%.2f" %)}
-;            {:key :mu :format #(format "%.2f" %)}
-;            {:key :gamma-bh}
-;            {:key :P  :title "P, kN" :format (format-units si/kN "%.1f")}
-;            {:key :Qbh :title "Qbh, kN" :format (format-units si/kN "%.1f")}]
-;     :table {:width 64}}
-;    [((lazy-compile bolted-connection)
-;               {:d (si/mm 20)
-;                :Rbun (si/MPa 1100)
-;                :mu 0.58
-;                :gamma-bh 1.362})
-;     ((lazy-compile bolted-connection)
-;               {:d (si/mm 22)
-;                :Rbun (si/MPa 1100)
-;                :mu 0.58
-;                :gamma-bh 1.362})
-;     ((lazy-compile bolted-connection)
-;               {:d (si/mm 24)
-;                :Rbun (si/MPa 1100)
-;                :mu 0.58
-;                :gamma-bh 1.362})]))
