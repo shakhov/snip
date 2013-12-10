@@ -1,0 +1,256 @@
+* Расчёт изгибаемых железобетонных элементов
+:PROPERTIES:
+:noweb-sep: "\n\n"
+:END:
+
+** $\xi$ --- относительная высота сжатой зоны
+:PROPERTIES:
+:noweb-ref: xi-y
+:END:
+
+*** Относительная высота сжатой зоны
+Относительная высота сжатой зоны $\xi = x/h_0$ не должна превышать предельной величины $\xi_y$
+\begin{equation}
+\xi_y = \cfrac{\omega}{1 +
+\frac{\sigma_1}{\sigma_2}\left(1-\frac{\omega}{1.1}\right)}
+\end{equation}
+
+#+begin_src clojure
+  :xi<=xi-y
+  (fnk
+   ""
+   [xi xi-y]
+   (<= xi xi-y))
+
+  :xi
+  (fnk
+   ""
+   [h0 x]
+   (/ x h0))
+
+  :xi-y
+  (fnk
+   ""
+   [omega sigma-1 sigma-2]
+   (/ omega
+      (+ 1 (* (/ sigma-1 sigma-2)
+              (- 1 (/ omega 1.1))))))
+#+end_src
+
+где:
+- $\omega$ --- коэффициент равный:
+  - $\omega = 0.85 - 0.008 R_b$ --- для элементов с обычным армированием;
+#  - $\omega = 0.85 - 0.008 R_b + \delta \le 0.9$ --- для элементов с
+#    косвенным армированием;
+#    - $\delta = 10 \mu \le 0.15$
+#    - $\mu$ --- коэффициент армирования;
+- $\sigma_1$ --- напряжения в арматуре равные:
+  - $R_s$ --- для ненапрягаемой арматуры;
+  - $R_p + 500\ \mathrm{МПа} - \sigma_p$ --- для напрягаемой арматуры;
+- $\sigma_2 = 500\ \mathrm{МПа}$ --- предельные напряжения в арматуре.
+
+#+begin_src clojure
+  :omega
+  (fnk
+   ""
+   [Rb]
+   (- 0.85 (* ((/ si/MPa) 0.008) Rb)))
+
+  :sigma-1
+  (fnk
+   ""
+   [Rs Rp sigma-p]
+   (if (zero? sigma-p)
+     Rs
+     (+ Rp (si/MPa 500) (- sigma-p))))
+
+  :sigma-2
+  (fnk
+   ""
+   []
+   (si/MPa 500))
+
+#+end_src
+
+*** Код потока
+#+begin_src clojure :noweb yes :noweb-ref xi-flow
+  (def xi-flow
+    (flow
+     {
+      <<xi-y>>
+      }))
+#+end_src
+
+
+** Расчёт прямоугольных сечений
+:PROPERTIES:
+:NAME: rect-bending
+:noweb-ref: rect-bending
+:END:
+
+*** $M_{max}$ --- предельный момент
+
+Предельно допустимый момент при изгибе прямоугольных железобетонных сечений вычисляется по формуле:
+\begin{equation}
+M \le M_{max} = R_b b x (h_0 - 0.5 x) + R_{sc} A_{sc,ef} (h_{01} - a_{sc}) + \sigma_{pc} A_pc (h_0 - a_p)
+\end{equation}
+
+#+begin_src clojure
+  :M-max
+  (fnk
+   ""
+   [Rb b x h0 h01 Asc-ef Rsc asc sigma-pc Apc apc]
+   (+ (* Rb b x
+         (- h0 (* 0.5 x)))
+      (* Rsc Asc-ef
+         (- h01 asc))
+      (* sigma-pc Apc
+         (- h0 apc))))
+#+end_src
+
+*** $x$ --- высота сжатой зоны
+
+Высота сжатой зоны определяется по формуле:
+\begin{equation}
+x = \frac{R_p A_p + R_s A_s - R_{sc} A_{sc,ef} - \sigma_{pc} A_{pc}} {R_b b}
+\end{equation}
+
+#+begin_src clojure
+  :x
+  (fnk
+   ""
+   [Rb b As Asc-ef Ap Apc Rs Rp Rsc sigma-pc]
+   (/ (+ (* Rp Ap)
+         (* Rs As)
+         (* -1 Rsc Asc-ef)
+         (* -1 sigma-pc Apc))
+      (* Rb b)))
+#+end_src
+
+*** $h_0$, $h_{01}$ --- рабочая высота сечения
+
+Рабочая высота для ненапрягаемой арматуры равна $h_{01} = h - a_s$.
+
+Рабочая высота сечения $h_0$ принимается от равнодействующий усилий в напрягаемой и ненапрягаемой арматуре.
+\begin{equation}
+h_0 = \cfrac{A_s R_s h_{01} + A_p R_p (h - a_p)}{A_s R_s + A_p R_p}
+\end{equation}
+
+При отсутствии напрягаемой арматуры $h_0 = h_{01}$.
+
+#+begin_src clojure
+  :h01
+  (fnk
+   [h as]
+   (- h as))
+
+  :h0
+  (fnk
+   [h h01 ap As Rs Ap Rp]
+   (if (zero? Ap)
+     h01
+     (/ (+ (* As Rs h01)
+           (* Ap Rp (- h ap)))
+        (+ (* As Rs)
+           (* Ap Rp)))))
+#+end_src
+
+*** Учет напрягаемой сжатой арматуры
+Напрягаемую арматуру, распложоженную в сжатой зоне и имеющую сцепление с бетоном, следует вводить в расчёт с напряжением:
+\begin{equation}
+\sigma_{pc} = R_{pc} - \sigma_{pc1}
+\end{equation}
+
+где:
+- $R_{pc}$ --- учитываемое расчётом наибольшее сжимающее напряжение в напрягаемой арматуре;
+- $\sigma_{pc1}$ --- расчётное напряжение в напрягаемой арматуре (за вычетом всех потерь) при коэффициенте надежности $\gamma_g = 1.1$; при $\sigma_{pc} \le R_{pc}$ принимается $\sigma_{pc} = 0$.
+
+#+begin_src clojure
+  :sigma-pc
+  (fnk
+   ""
+   [Rpc sigma-pc1]
+   (if (<= sigma-pc1 Rpc)
+     (si/MPa 0.0)
+     (- Rpc sigma-pc1)))
+#+end_src
+
+*** Учет сжатой ненапрягаемой арматуры
+Ненапрягаемая арматура сжатой зоны  $A_{sc}$ учитывается полностью ($A_{sc,ef} = A_{sc}$), если $x_2 \ge 2a_{sc}$, где $x_2$ --- высота сжатой зоны, вычесленная с учетом $A_{sc}$.
+При $x_1 < 2a_{sc}$ арматура $A_{sc}$ не учитывается ($A_{sc,ef} = 0$).
+Если без учета сжатой арматуры высота сжатой зоны $x_1\le 2a_{sc}$, а при учете сжатой арматуры $x_2 < 2 a_{sc}$, то предельный момент допускается вычислять по формуле:
+\begin{equation}
+M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
+\end{equation}
+
+#+begin_src clojure
+  :M-max-sc
+  (fnk
+   ""
+   [Rp Ap Rs As h0 asc]
+   (* (+ (* Rp Ap)
+         (* Rs As))
+      (- h0 asc)))
+#+end_src
+
+*** Код потока
+#+begin_src clojure :noweb yes :noweb-ref rect-bending-flow
+  (def rect-bending-flow
+    (flow
+     {
+      <<rect-bending>>
+      }))
+#+end_src
+
+
+** Код модуля
+:PROPERTIES:
+:noweb: yes
+:tangle: ../../../src/shakhov/snip/concrete.clj
+:END:
+
+*** Заголовок
+#+begin_src clojure
+  (ns shakhov.snip.concrete
+    (:refer-clojure :exclude [time force + - * / < > <= >= = zero? pos? neg? sgn abs
+                              sin cos tan asin acos atan exp log min max])
+
+    (:use [shakhov.flow.core]
+          [shakhov.snip.utils])
+
+    (:use [clojure.algo.generic.arithmetic :only [+ - * /]]
+          [clojure.algo.generic.comparison :only [< > <= >= = zero? pos? neg? min max]]
+          [clojure.algo.generic.math-functions :only [pow sqrt sgn abs sin cos tan
+                                                      asin acos atan exp log]])
+    (:require [shakhov.snip.dimensions :as dim]
+              [shakhov.snip.units :as si]))
+#+end_src
+
+*** Потоки
+#+begin_src clojure
+  <<xi-flow>>
+  <<rect-bending-flow>>
+#+end_src
+
+*** Расчётные функции
+#+begin_src clojure
+  (let [lazy-rect (lazy-compile rect-bending-flow)
+        lazy-xi   (lazy-compile xi-flow)]
+    (def rect-bending
+      (fnk
+       {:keys [Rb b h Rs As as] :as args}
+       (let [input (merge {:Rsc Rs :Asc ((pow si/m 2) 0) :asc (si/m 0)
+                           :Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
+                           :Rp  (si/MPa 0) :Rpc (si/MPa 500)
+                           :ap (si/m 0) :apc (si/m 0)
+                           :sigma-pc1 (si/MPa 0)
+                           :sigma-p (si/MPa 0)}
+                          args)
+             no-Asc  (lazy-rect (assoc input :Asc-ef ((pow si/m 2) 0)))
+             all-Asc (lazy-rect (assoc input :Asc-ef (:Asc input)))]
+         (lazy-xi (cond
+                   (<  (:x no-Asc) (* 2 (:asc input))) (dissoc  no-Asc :M-max-sc)
+                   (>= (:x all-Asc)(* 2 (:asc input))) (dissoc all-Asc :M-max-sc)
+                   :else (assoc (dissoc all-Asc :M-max)
+                                :x (* 2 (:asc input)))))))))
+#+end_src
