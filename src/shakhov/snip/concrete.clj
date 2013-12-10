@@ -39,15 +39,15 @@
     :omega
     (fnk
      ""
-     [Rb]
-     (- 0.85 (* ((/ si/MPa) 0.008) Rb)))
+     [Rc]
+     (- 0.85 (* ((/ si/MPa) 0.008) Rc)))
     
     :sigma-1
     (fnk
      ""
-     [Rs Rp sigma-p]
+     [Rr Rp sigma-p]
      (if (zero? sigma-p)
-       Rs
+       Rr
        (+ Rp (si/MPa 500) (- sigma-p))))
     
     :sigma-2
@@ -63,37 +63,37 @@
     :M-max
     (fnk
      ""
-     [Rb b x h0 h01 Asc-ef Rsc asc sigma-pc Apc apc]
-     (+ (* Rb b x
+     [Rc b x h0 h01 Arc-ef Rrc arc sigma-pc Apc apc]
+     (+ (* Rc b x
            (- h0 (* 0.5 x)))
-        (* Rsc Asc-ef
-           (- h01 asc))
+        (* Rrc Arc-ef
+           (- h01 arc))
         (* sigma-pc Apc
            (- h0 apc))))
     
     :x
     (fnk
      ""
-     [Rb b As Asc-ef Ap Apc Rs Rp Rsc sigma-pc]
+     [Rc b Ar Arc-ef Ap Apc Rr Rp Rrc sigma-pc]
      (/ (+ (* Rp Ap)
-           (* Rs As)
-           (* -1 Rsc Asc-ef)
+           (* Rr Ar)
+           (* -1 Rrc Arc-ef)
            (* -1 sigma-pc Apc))
-        (* Rb b)))
+        (* Rc b)))
     
     :h01
     (fnk
-     [h as]
-     (- h as))
+     [h ar]
+     (- h ar))
     
     :h0
     (fnk
-     [h h01 ap As Rs Ap Rp]
+     [h h01 ap Ar Rr Ap Rp]
      (if (zero? Ap)
        h01
-       (/ (+ (* As Rs h01)
+       (/ (+ (* Ar Rr h01)
              (* Ap Rp (- h ap)))
-          (+ (* As Rs)
+          (+ (* Ar Rr)
              (* Ap Rp)))))
     
     :sigma-pc
@@ -107,28 +107,28 @@
     :M-max-sc
     (fnk
      ""
-     [Rp Ap Rs As h0 asc]
+     [Rp Ap Rr Ar h0 arc]
      (* (+ (* Rp Ap)
-           (* Rs As))
-        (- h0 asc)))
+           (* Rr Ar))
+        (- h0 arc)))
     }))
 
 (let [lazy-rect (lazy-compile rect-bending-flow)
       lazy-xi   (lazy-compile xi-flow)]
   (def rect-bending
     (fnk
-     {:keys [Rb b h Rs As as] :as args}
-     (let [input (merge {:Rsc Rs :Asc ((pow si/m 2) 0) :asc (si/m 0)
+     {:keys [Rc b h Rr Ar ar] :as args}
+     (let [input (merge {:Rrc Rr :Arc ((pow si/m 2) 0) :arc (si/m 0)
                          :Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
                          :Rp  (si/MPa 0) :Rpc (si/MPa 500)
                          :ap (si/m 0) :apc (si/m 0)
                          :sigma-pc1 (si/MPa 0)
                          :sigma-p (si/MPa 0)}
                         args)
-           no-Asc  (lazy-rect (assoc input :Asc-ef ((pow si/m 2) 0)))
-           all-Asc (lazy-rect (assoc input :Asc-ef (:Asc input)))]
+           no-Arc  (lazy-rect (assoc input :Arc-ef ((pow si/m 2) 0)))
+           all-Arc (lazy-rect (assoc input :Arc-ef (:Arc input)))]
        (lazy-xi (cond
-                 (<  (:x no-Asc) (* 2 (:asc input))) (dissoc  no-Asc :M-max-sc)
-                 (>= (:x all-Asc)(* 2 (:asc input))) (dissoc all-Asc :M-max-sc)
-                 :else (assoc (dissoc all-Asc :M-max)
-                              :x (* 2 (:asc input)))))))))
+                 (<  (:x no-Arc) (* 2 (:arc input))) (dissoc  no-Arc :M-max-sc)
+                 (>= (:x all-Arc)(* 2 (:arc input))) (dissoc all-Arc :M-max-sc)
+                 :else (assoc (dissoc all-Arc :M-max)
+                              :x (* 2 (:arc input)))))))))
