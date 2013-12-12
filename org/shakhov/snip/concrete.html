@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>concrete</title>
-<!-- 2013-09-09 �� 16:49 -->
+<!-- 2013-12-12 �� 11:24 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="generator" content="Org-mode"/>
 <style type="text/css">
@@ -181,20 +181,15 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#sec-1">1. Расчёт изгибаемых железобетонных элементов</a>
 <ul>
-<li><a href="#sec-1-1">1.1. \(\xi\) &#x2014; относительная высота сжатой зоны</a>
+<li><a href="#sec-1-1">1.1. Расчет по прочности нормальных сечений</a>
 <ul>
-<li><a href="#sec-1-1-1">1.1.1. Относительная высота сжатой зоны</a></li>
-<li><a href="#sec-1-1-2">1.1.2. Код потока</a></li>
+<li><a href="#sec-1-1-1">1.1.1. \(\xi\) &#x2014; относительная высота сжатой зоны</a></li>
+<li><a href="#sec-1-1-2">1.1.2. Расчёт прямоугольных сечений</a></li>
 </ul>
 </li>
-<li><a href="#sec-1-2">1.2. Расчёт прямоугольных сечений</a>
+<li><a href="#sec-1-2">1.2. Расчет ширины раскрытия нормальных трещин</a>
 <ul>
-<li><a href="#sec-1-2-1">1.2.1. \(M_{max}\) &#x2014; предельный момент</a></li>
-<li><a href="#sec-1-2-2">1.2.2. \(x\) &#x2014; высота сжатой зоны</a></li>
-<li><a href="#sec-1-2-3">1.2.3. \(h_0\), \(h_{01}\) &#x2014; рабочая высота сечения</a></li>
-<li><a href="#sec-1-2-4">1.2.4. Учет напрягаемой сжатой арматуры</a></li>
-<li><a href="#sec-1-2-5">1.2.5. Учет сжатой ненапрягаемой арматуры</a></li>
-<li><a href="#sec-1-2-6">1.2.6. Код потока</a></li>
+<li><a href="#sec-1-2-1">1.2.1. Прямоугольные сечения без преднапрягаемой арматуры</a></li>
 </ul>
 </li>
 <li><a href="#sec-1-3">1.3. Код модуля</a>
@@ -215,13 +210,14 @@ for the JavaScript code in this tag.
 </div>
 
 <div id="outline-container-sec-1-1" class="outline-3">
-<h3 id="sec-1-1"><span class="section-number-3">1.1</span> \(\xi\) &#x2014; относительная высота сжатой зоны</h3>
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Расчет по прочности нормальных сечений</h3>
 <div class="outline-text-3" id="text-1-1">
+</div><div id="outline-container-sec-1-1-1" class="outline-4">
+<h4 id="sec-1-1-1"><span class="section-number-4">1.1.1</span> \(\xi\) &#x2014; относительная высота сжатой зоны</h4>
+<div class="outline-text-4" id="text-1-1-1">
 </div>
 
-<div id="outline-container-sec-1-1-1" class="outline-4">
-<h4 id="sec-1-1-1"><span class="section-number-4">1.1.1</span> Относительная высота сжатой зоны</h4>
-<div class="outline-text-4" id="text-1-1-1">
+<ol class="org-ol"><li>Относительная высота сжатой зоны<br/><div class="outline-text-5" id="text-1-1-1-1">
 <p>
 Относительная высота сжатой зоны \(\xi = x/h_0\) не должна превышать предельной величины \(\xi_y\)
 </p>
@@ -260,7 +256,7 @@ for the JavaScript code in this tag.
 <ul class="org-ul">
 <li>\(\omega\) &#x2014; коэффициент равный:
 <ul class="org-ul">
-<li>\(\omega = 0.85 - 0.008 R_b\) &#x2014; для элементов с обычным армированием;
+<li>\(\omega = 0.85 - 0.008 R_c\) &#x2014; для элементов с обычным армированием;
 </li>
 </ul>
 </li>
@@ -268,7 +264,7 @@ for the JavaScript code in this tag.
 <ul class="org-ul">
 <li>\(\sigma_1\) &#x2014; напряжения в арматуре равные:
 <ul class="org-ul">
-<li>\(R_s\) &#x2014; для ненапрягаемой арматуры;
+<li>\(R_r\) &#x2014; для ненапрягаемой арматуры;
 </li>
 <li>\(R_p + 500\ \mathrm{МПа} - \sigma_p\) &#x2014; для напрягаемой арматуры;
 </li>
@@ -283,15 +279,15 @@ for the JavaScript code in this tag.
 <pre class="src src-clojure"><span style="color: #4c83ff;">:omega</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rb</span>]
- (<span style="color: #D8FA3C;">-</span> 0.85 (<span style="color: #D8FA3C;">*</span> ((<span style="color: #D8FA3C;">/</span> si/<span style="color: #919191;">MPa</span>) 0.008) <span style="color: #919191;">Rb</span>)))
+ [<span style="color: #919191;">Rc</span>]
+ (<span style="color: #D8FA3C;">-</span> 0.85 (<span style="color: #D8FA3C;">*</span> ((<span style="color: #D8FA3C;">/</span> si/<span style="color: #919191;">MPa</span>) 0.008) <span style="color: #919191;">Rc</span>)))
 
 <span style="color: #4c83ff;">:sigma-1</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rs</span> <span style="color: #919191;">Rp</span> sigma-p]
+ [<span style="color: #919191;">Rr</span> <span style="color: #919191;">Rp</span> sigma-p]
  (<span style="color: #FF6400;">if</span> (zero? sigma-p)
-   <span style="color: #919191;">Rs</span>
+   <span style="color: #919191;">Rr</span>
    (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Rp</span> (si/<span style="color: #919191;">MPa</span> 500) (<span style="color: #D8FA3C;">-</span> sigma-p))))
 
 <span style="color: #4c83ff;">:sigma-2</span>
@@ -302,10 +298,8 @@ for the JavaScript code in this tag.
 </pre>
 </div>
 </div>
-</div>
-<div id="outline-container-sec-1-1-2" class="outline-4">
-<h4 id="sec-1-1-2"><span class="section-number-4">1.1.2</span> Код потока</h4>
-<div class="outline-text-4" id="text-1-1-2">
+</li>
+<li>Код потока<br/><div class="outline-text-5" id="text-1-1-1-2">
 <div class="org-src-container">
 
 <pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">xi-flow</span>
@@ -334,15 +328,15 @@ for the JavaScript code in this tag.
     <span style="color: #4c83ff;">:omega</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rb</span>]
-     (<span style="color: #D8FA3C;">-</span> 0.85 (<span style="color: #D8FA3C;">*</span> ((<span style="color: #D8FA3C;">/</span> si/<span style="color: #919191;">MPa</span>) 0.008) <span style="color: #919191;">Rb</span>)))
+     [<span style="color: #919191;">Rc</span>]
+     (<span style="color: #D8FA3C;">-</span> 0.85 (<span style="color: #D8FA3C;">*</span> ((<span style="color: #D8FA3C;">/</span> si/<span style="color: #919191;">MPa</span>) 0.008) <span style="color: #919191;">Rc</span>)))
 
     <span style="color: #4c83ff;">:sigma-1</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rs</span> <span style="color: #919191;">Rp</span> sigma-p]
+     [<span style="color: #919191;">Rr</span> <span style="color: #919191;">Rp</span> sigma-p]
      (<span style="color: #FF6400;">if</span> (zero? sigma-p)
-       <span style="color: #919191;">Rs</span>
+       <span style="color: #919191;">Rr</span>
        (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Rp</span> (si/<span style="color: #919191;">MPa</span> 500) (<span style="color: #D8FA3C;">-</span> sigma-p))))
 
     <span style="color: #4c83ff;">:sigma-2</span>
@@ -355,22 +349,20 @@ for the JavaScript code in this tag.
 </pre>
 </div>
 </div>
-</div>
-</div>
-
-<div id="outline-container-sec-1-2" class="outline-3">
-<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Расчёт прямоугольных сечений</h3>
-<div class="outline-text-3" id="text-1-2">
+</li></ol>
 </div>
 
-<div id="outline-container-sec-1-2-1" class="outline-4">
-<h4 id="sec-1-2-1"><span class="section-number-4">1.2.1</span> \(M_{max}\) &#x2014; предельный момент</h4>
-<div class="outline-text-4" id="text-1-2-1">
+<div id="outline-container-sec-1-1-2" class="outline-4">
+<h4 id="sec-1-1-2"><span class="section-number-4">1.1.2</span> Расчёт прямоугольных сечений</h4>
+<div class="outline-text-4" id="text-1-1-2">
+</div>
+
+<ol class="org-ol"><li>\(M_{max}\) &#x2014; предельный момент<br/><div class="outline-text-5" id="text-1-1-2-1">
 <p>
 Предельно допустимый момент при изгибе прямоугольных железобетонных сечений вычисляется по формуле:
 </p>
 \begin{equation}
-M \le M_{max} = R_b b x (h_0 - 0.5 x) + R_{sc} A_{sc,ef} (h_{01} - a_{sc}) + \sigma_{pc} A_pc (h_0 - a_p)
+M \le M_{max} = R_c b x (h_0 - 0.5 x) + R_{rc} A_{rc,ef} (h_{01} - a_{rc}) + \sigma_{pc} A_{pc} (h_0 - a_p)
 \end{equation}
 
 <div class="org-src-container">
@@ -378,25 +370,23 @@ M \le M_{max} = R_b b x (h_0 - 0.5 x) + R_{sc} A_{sc,ef} (h_{01} - a_{sc}) + \si
 <pre class="src src-clojure"><span style="color: #4c83ff;">:M-max</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rb</span> b x h0 h01 Asc-ef <span style="color: #919191;">Rsc</span> asc sigma-pc <span style="color: #919191;">Apc</span> apc]
- (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rb</span> b x
+ [<span style="color: #919191;">Rc</span> b x h0 h01 Arc-ef <span style="color: #919191;">Rrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+ (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
        (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
-    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rsc</span> Asc-ef
-       (<span style="color: #D8FA3C;">-</span> h01 asc))
+    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rrc</span> Arc-ef
+       (<span style="color: #D8FA3C;">-</span> h01 arc))
     (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
        (<span style="color: #D8FA3C;">-</span> h0 apc))))
 </pre>
 </div>
 </div>
-</div>
-<div id="outline-container-sec-1-2-2" class="outline-4">
-<h4 id="sec-1-2-2"><span class="section-number-4">1.2.2</span> \(x\) &#x2014; высота сжатой зоны</h4>
-<div class="outline-text-4" id="text-1-2-2">
+</li>
+<li>\(x\) &#x2014; высота сжатой зоны<br/><div class="outline-text-5" id="text-1-1-2-2">
 <p>
 Высота сжатой зоны определяется по формуле:
 </p>
 \begin{equation}
-x = \frac{R_p A_p + R_s A_s - R_{sc} A_{sc,ef} - \sigma_{pc} A_{pc}} {R_b b}
+x = \frac{R_p A_p + R_r A_r - R_{rc} A_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
 \end{equation}
 
 <div class="org-src-container">
@@ -404,28 +394,26 @@ x = \frac{R_p A_p + R_s A_s - R_{sc} A_{sc,ef} - \sigma_{pc} A_{pc}} {R_b b}
 <pre class="src src-clojure"><span style="color: #4c83ff;">:x</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rb</span> b <span style="color: #919191;">As</span> Asc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rsc</span> sigma-pc]
+ [<span style="color: #919191;">Rc</span> b <span style="color: #919191;">Ar</span> Arc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rrc</span> sigma-pc]
  (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-       (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span>)
-       (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rsc</span> Asc-ef)
+       (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>)
+       (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rrc</span> Arc-ef)
        (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
-    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rb</span> b)))
+    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
 </pre>
 </div>
 </div>
-</div>
-<div id="outline-container-sec-1-2-3" class="outline-4">
-<h4 id="sec-1-2-3"><span class="section-number-4">1.2.3</span> \(h_0\), \(h_{01}\) &#x2014; рабочая высота сечения</h4>
-<div class="outline-text-4" id="text-1-2-3">
+</li>
+<li>\(h_0\), \(h_{01}\) &#x2014; рабочая высота сечения<br/><div class="outline-text-5" id="text-1-1-2-3">
 <p>
-Рабочая высота для ненапрягаемой арматуры равна \(h_{01} = h - a_s\).
+Рабочая высота для ненапрягаемой арматуры равна \(h_{01} = h - a_r\).
 </p>
 
 <p>
 Рабочая высота сечения \(h_0\) принимается от равнодействующий усилий в напрягаемой и ненапрягаемой арматуре.
 </p>
 \begin{equation}
-h_0 = \cfrac{A_s R_s h_{01} + A_p R_p (h - a_p)}{A_s R_s + A_p R_p}
+h_0 = \cfrac{A_r R_r h_{01} + A_p R_p (h - a_p)}{A_r R_r + A_p R_p}
 \end{equation}
 
 <p>
@@ -436,25 +424,23 @@ h_0 = \cfrac{A_s R_s h_{01} + A_p R_p (h - a_p)}{A_s R_s + A_p R_p}
 
 <pre class="src src-clojure"><span style="color: #4c83ff;">:h01</span>
 (fnk
- [h as]
- (<span style="color: #D8FA3C;">-</span> h as))
+ [h ar]
+ (<span style="color: #D8FA3C;">-</span> h ar))
 
 <span style="color: #4c83ff;">:h0</span>
 (fnk
- [h h01 ap <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>]
+ [h h01 ap <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>]
  (<span style="color: #FF6400;">if</span> (zero? <span style="color: #919191;">Ap</span>)
    h01
-   (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span> h01)
+   (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span> h01)
          (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span> (<span style="color: #D8FA3C;">-</span> h ap)))
-      (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span>)
+      (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span>)
          (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>)))))
 </pre>
 </div>
 </div>
-</div>
-<div id="outline-container-sec-1-2-4" class="outline-4">
-<h4 id="sec-1-2-4"><span class="section-number-4">1.2.4</span> Учет напрягаемой сжатой арматуры</h4>
-<div class="outline-text-4" id="text-1-2-4">
+</li>
+<li>Учет напрягаемой сжатой арматуры<br/><div class="outline-text-5" id="text-1-1-2-4">
 <p>
 Напрягаемую арматуру, распложоженную в сжатой зоне и имеющую сцепление с бетоном, следует вводить в расчёт с напряжением:
 </p>
@@ -484,17 +470,15 @@ h_0 = \cfrac{A_s R_s h_{01} + A_p R_p (h - a_p)}{A_s R_s + A_p R_p}
 </pre>
 </div>
 </div>
-</div>
-<div id="outline-container-sec-1-2-5" class="outline-4">
-<h4 id="sec-1-2-5"><span class="section-number-4">1.2.5</span> Учет сжатой ненапрягаемой арматуры</h4>
-<div class="outline-text-4" id="text-1-2-5">
+</li>
+<li>Учет сжатой ненапрягаемой арматуры<br/><div class="outline-text-5" id="text-1-1-2-5">
 <p>
-Ненапрягаемая арматура сжатой зоны  \(A_{sc}\) учитывается полностью (\(A_{sc,ef} = A_{sc}\)), если \(x_2 \ge 2a_{sc}\), где \(x_2\) &#x2014; высота сжатой зоны, вычесленная с учетом \(A_{sc}\).
-При \(x_1 < 2a_{sc}\) арматура \(A_{sc}\) не учитывается (\(A_{sc,ef} = 0\)).
-Если без учета сжатой арматуры высота сжатой зоны \(x_1\le 2a_{sc}\), а при учете сжатой арматуры \(x_2 < 2 a_{sc}\), то предельный момент допускается вычислять по формуле:
+Ненапрягаемая арматура сжатой зоны  \(A_{rc}\) учитывается полностью (\(A_{rc,ef} = A_{rc}\)), если \(x_2 \ge 2a_{rc}\), где \(x_2\) &#x2014; высота сжатой зоны, вычесленная с учетом \(A_{rc}\).
+При \(x_1 < 2a_{rc}\) арматура \(A_{rc}\) не учитывается (\(A_{rc,ef} = 0\)).
+Если без учета сжатой арматуры высота сжатой зоны \(x_1\le 2a_{rc}\), а при учете сжатой арматуры \(x_2 < 2 a_{rc}\), то предельный момент допускается вычислять по формуле:
 </p>
 \begin{equation}
-M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
+M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
 \end{equation}
 
 <div class="org-src-container">
@@ -502,17 +486,15 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
 <pre class="src src-clojure"><span style="color: #4c83ff;">:M-max-sc</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span> h0 asc]
+ [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> h0 arc]
  (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-       (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span>))
-    (<span style="color: #D8FA3C;">-</span> h0 asc)))
+       (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>))
+    (<span style="color: #D8FA3C;">-</span> h0 arc)))
 </pre>
 </div>
 </div>
-</div>
-<div id="outline-container-sec-1-2-6" class="outline-4">
-<h4 id="sec-1-2-6"><span class="section-number-4">1.2.6</span> Код потока</h4>
-<div class="outline-text-4" id="text-1-2-6">
+</li>
+<li>Код потока<br/><div class="outline-text-5" id="text-1-1-2-6">
 <div class="org-src-container">
 
 <pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending-flow</span>
@@ -521,37 +503,37 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
     <span style="color: #4c83ff;">:M-max</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rb</span> b x h0 h01 Asc-ef <span style="color: #919191;">Rsc</span> asc sigma-pc <span style="color: #919191;">Apc</span> apc]
-     (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rb</span> b x
+     [<span style="color: #919191;">Rc</span> b x h0 h01 Arc-ef <span style="color: #919191;">Rrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+     (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
            (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
-        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rsc</span> Asc-ef
-           (<span style="color: #D8FA3C;">-</span> h01 asc))
+        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rrc</span> Arc-ef
+           (<span style="color: #D8FA3C;">-</span> h01 arc))
         (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
            (<span style="color: #D8FA3C;">-</span> h0 apc))))
 
     <span style="color: #4c83ff;">:x</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rb</span> b <span style="color: #919191;">As</span> Asc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rsc</span> sigma-pc]
+     [<span style="color: #919191;">Rc</span> b <span style="color: #919191;">Ar</span> Arc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rrc</span> sigma-pc]
      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span>)
-           (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rsc</span> Asc-ef)
+           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>)
+           (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rrc</span> Arc-ef)
            (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
-        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rb</span> b)))
+        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
 
     <span style="color: #4c83ff;">:h01</span>
     (fnk
-     [h as]
-     (<span style="color: #D8FA3C;">-</span> h as))
+     [h ar]
+     (<span style="color: #D8FA3C;">-</span> h ar))
 
     <span style="color: #4c83ff;">:h0</span>
     (fnk
-     [h h01 ap <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>]
+     [h h01 ap <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>]
      (<span style="color: #FF6400;">if</span> (zero? <span style="color: #919191;">Ap</span>)
        h01
-       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span> h01)
+       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span> h01)
              (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span> (<span style="color: #D8FA3C;">-</span> h ap)))
-          (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span>)
+          (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span>)
              (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>)))))
 
     <span style="color: #4c83ff;">:sigma-pc</span>
@@ -565,14 +547,339 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
     <span style="color: #4c83ff;">:M-max-sc</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span> h0 asc]
+     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> h0 arc]
      (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span>))
-        (<span style="color: #D8FA3C;">-</span> h0 asc)))
+           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>))
+        (<span style="color: #D8FA3C;">-</span> h0 arc)))
     }))
 </pre>
 </div>
 </div>
+</li></ol>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Расчет ширины раскрытия нормальных трещин</h3>
+<div class="outline-text-3" id="text-1-2">
+</div><div id="outline-container-sec-1-2-1" class="outline-4">
+<h4 id="sec-1-2-1"><span class="section-number-4">1.2.1</span> Прямоугольные сечения без преднапрягаемой арматуры</h4>
+<div class="outline-text-4" id="text-1-2-1">
+</div>
+
+<ol class="org-ol"><li>Ширина раскрытия нормальных трещин в растянутой зоне<br/><div class="outline-text-5" id="text-1-2-1-1">
+<p>
+Ширину раскрытия нормальных трещин в железобетонных элементов следует определять по формуле:
+</p>
+\begin{equation}
+a_{cr} = \cfrac{\sigma_r}{E_r}\psi_{cr} \le \Delta_{cr}
+\end{equation}
+
+<p>
+где:
+</p>
+<ul class="org-ul">
+<li>\(\sigma_r\) &#x2014; растягивающее напряжение в наиболее растянутых (крайних) стержнях;
+</li>
+<li>\(E_r\) &#x2014; модуль упругости ненапрягаемой арматуры;
+</li>
+<li>\(\psi_{cr}\) &#x2014; коэффициент раскрытия трещин, определяемый в зависимости от радиуса армирования;
+</li>
+<li>\(\Delta_{cr}\) &#x2014; предельное значение расчетной ширины раскрытия трещин.
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:a-cr</span>
+(fnk
+ [sigma-r <span style="color: #919191;">Er</span> psi-cr]
+ (<span style="color: #D8FA3C;">*</span> psi-cr (<span style="color: #D8FA3C;">/</span> sigma-r <span style="color: #919191;">Er</span>)))
+</pre>
+</div>
+</div>
+</li>
+<li>Коэффициент раскрытия трещин \(\psi\)<br/><div class="outline-text-5" id="text-1-2-1-2">
+<p>
+Коэффициент раскрытия трещин \(\psi\) следует принимать в зависимости от
+радиуса армирования \(R_{cr}\) (см):
+</p>
+<ul class="org-ul">
+<li>\(0.35 R_{cr}\) &#x2014; для гладкой стержневой арматуры, арматурных пучков из гладкой проволоки и стальных закрытых канатов;
+</li>
+<li>\(1.5 \sqrt{R_{cr}}\) &#x2014; для стержневой арматуры периодического профиля, проволок периодического профиля, пучков из этой проволоки, канатов класса К7 и пучков из них,
+</li>
+</ul>
+<p>
+стальных канатов со спиральной и двойной свивкой, а также любой арматуры в стенках.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:psi-cr</span>
+(fnk
+ [R-cr]
+ (si/cm (<span style="color: #D8FA3C;">*</span> 1.5 (sqrt (<span style="color: #4c83ff;">:magnitude</span> (si/cm R-cr))))))
+</pre>
+</div>
+</div>
+</li>
+<li>Радиус армирования<br/><div class="outline-text-5" id="text-1-2-1-3">
+<p>
+Радиус армирования определяется по формуле:
+</p>
+\begin{equation}
+R_{cr} = \cfrac{A_{cr}}{\Sigma \beta n d}
+\end{equation}
+
+<p>
+где:
+</p>
+<ul class="org-ul">
+<li>\(A_{cr}\) &#x2014; площадь зоны взаимодействия для нормального сечения, принимаемая ограниченным наружним контуром сечения и радиусом взаимодействия \(r = 6d\);
+</li>
+<li>\(\beta\) &#x2014; коэффициент, учитывающий степень сцепления арматурных элементов с бетоном;
+</li>
+<li>\(n_d\) &#x2014; число арматурных элементов с одинаковым номинальным диаметром \(d\);
+</li>
+<li>\(d\) &#x2014; диаметр одного стержня.
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:R-cr</span>
+(fnk
+ [A-cr beta-cr nd d]
+ (<span style="color: #D8FA3C;">/</span> A-cr
+    beta-cr nd d))
+</pre>
+</div>
+</div>
+</li>
+<li>Площадь зоны взаимодействия \(A_{cr}\)<br/><div class="outline-text-5" id="text-1-2-1-4">
+<p>
+Площадь зоны взаимодействия \(A_{cr}\) ограничена контуром сечения и
+радиусом взаимодействия \(r = 6d\), откладываемым от крайего в сторону
+нейтральной оси стержня растянутой арматуры. Зона взаимодействия не
+должна выходить за нейтральную ось изгибаемого элемента.
+</p>
+\begin{equation}
+A_{cr} = b h_r = b (a_{r,cr} + 6d)
+\end{equation}
+<p>
+где \(h_r\) &#x2014; высота зоны взаимодействия.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:A-cr</span>
+(fnk
+ [b hr]
+ (<span style="color: #D8FA3C;">*</span> b hr))
+
+<span style="color: #4c83ff;">:hr</span>
+(fnk
+ [ar-cr h x-el d]
+ (<span style="color: #D8FA3C;">min</span> (<span style="color: #D8FA3C;">-</span> h x-el)
+      (<span style="color: #D8FA3C;">+</span> ar-cr (<span style="color: #D8FA3C;">*</span> 6 d))))
+
+<span style="color: #4c83ff;">:ar-cr</span>
+(fnk
+ [ar]
+ ar)
+</pre>
+</div>
+</div>
+</li>
+<li>Напряжения в растянутой арматуре \(\sigma_r\)<br/><div class="outline-text-5" id="text-1-2-1-5">
+<p>
+Напряжения в растянутой арматуре вычисляются в предположении упругой
+работы железобетонного сечения от действия нормативного момента:
+</p>
+\begin{equation}
+\sigma_r = n' \cfrac{M_{ser}}{I_{red,el}}Z_r
+\end{equation}
+<p>
+где:
+</p>
+<ul class="org-ul">
+<li>\(M_{ser}\) &#x2014; нормативный изгибающий момент в сечении;
+</li>
+<li>\(I_{red,el}\) &#x2014; приведенный к бетону момент инерции сечения,
+вычисленный в предположении упругой работы сечения без учета бетона
+растянутой зоны;
+</li>
+<li>\(Z_r\) &#x2014; расстояние от нейтральной оси до центра тяжести растянутой
+рабочей арматуры;
+</li>
+<li>\(n'\) &#x2014; коэффициент приведения арматуры к бетону с учетом длительных
+процессов усадки и ползучести.
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:sigma-r</span>
+(fnk
+ [M-ser I-red-el <span style="color: #919191;">Zr</span> n']
+ (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">/</span> M-ser I-red-el)
+    <span style="color: #919191;">Zr</span>))
+</pre>
+</div>
+</div>
+</li>
+<li>Геометрические характеристики приведенного сечения<br/><div class="outline-text-5" id="text-1-2-1-6">
+<p>
+Положение нейтральной оси приведенного к бетону сечения без учета
+бетона сжатой зоны определяется через равенство статических моментов
+сжатого бетона, сжатой арматуры и растянутой арматуры:
+</p>
+\begin{equation}
+\cfrac{b x_{el}^2}{2} + n' \left(A_{rc}(x_{el}-a_{rc}) - A_r (h - x_{el} - a_r) \right) = 0
+\end{equation}
+<p>
+где \(x_{el}\) &#x2014; высота сжатой зоны бетона.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:x-el</span>
+(fnk
+ [n' b h ar arc <span style="color: #919191;">Ar</span> <span style="color: #919191;">Arc</span>]
+ (<span style="color: #FF6400;">let</span> [a (<span style="color: #D8FA3C;">*</span> 1/2 b)
+       b (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Arc</span> <span style="color: #919191;">Ar</span>))
+       c (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">-</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> ar)
+                         (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> h)
+                         (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Arc</span> arc)))
+       D (<span style="color: #D8FA3C;">-</span> (pow b 2) (<span style="color: #D8FA3C;">*</span> 4 a c))]
+   (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">-</span> b) (sqrt D))
+      2 a)))
+
+<span style="color: #4c83ff;">:Zr</span>
+(fnk
+ [x-el h ar]
+ (<span style="color: #D8FA3C;">-</span> h x-el ar))
+</pre>
+</div>
+
+<p>
+Момент инерции сечения:
+</p>
+\begin{equation}
+I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r (h - x_{el} - a_r)^2 \right)
+\end{equation}
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:I-red-el</span>
+(fnk
+ [<span style="color: #919191;">Ar</span> <span style="color: #919191;">Arc</span> n' h x-el ar arc b]
+ (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> 1/3 b (pow x-el 3))
+    (<span style="color: #D8FA3C;">*</span> n'
+       (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Arc</span> (pow (<span style="color: #D8FA3C;">-</span> x-el arc)  2))
+          (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span>  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar) 2))))))
+</pre>
+</div>
+</div>
+</li>
+<li>Проверка трещиностойкости сжатого бетона<br/><div class="outline-text-5" id="text-1-2-1-7">
+<p>
+Напряжения в сжатой фибре изгибаемого бетонного элемента не должны
+превышать \(R_{c,mc2}\)
+</p>
+\begin{equation}
+\sigma_c = \cfrac{M_{ser}}{I_{red,el}} x_{el} \le R_{c,mc2}
+\end{equation}
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:sigma-b</span>
+(fnk
+ [I-red-el x-el M-ser]
+ (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">/</span> M-ser I-red-el) x-el))
+</pre>
+</div>
+</div>
+</li>
+<li>Код потока<br/><div class="outline-text-5" id="text-1-2-1-8">
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-crack-width-flow</span>
+  (flow
+   {
+    <span style="color: #4c83ff;">:a-cr</span>
+    (fnk
+     [sigma-r <span style="color: #919191;">Er</span> psi-cr]
+     (<span style="color: #D8FA3C;">*</span> psi-cr (<span style="color: #D8FA3C;">/</span> sigma-r <span style="color: #919191;">Er</span>)))
+
+    <span style="color: #4c83ff;">:psi-cr</span>
+    (fnk
+     [R-cr]
+     (si/cm (<span style="color: #D8FA3C;">*</span> 1.5 (sqrt (<span style="color: #4c83ff;">:magnitude</span> (si/cm R-cr))))))
+
+    <span style="color: #4c83ff;">:R-cr</span>
+    (fnk
+     [A-cr beta-cr nd d]
+     (<span style="color: #D8FA3C;">/</span> A-cr
+        beta-cr nd d))
+
+    <span style="color: #4c83ff;">:A-cr</span>
+    (fnk
+     [b hr]
+     (<span style="color: #D8FA3C;">*</span> b hr))
+
+    <span style="color: #4c83ff;">:hr</span>
+    (fnk
+     [ar-cr h x-el d]
+     (<span style="color: #D8FA3C;">min</span> (<span style="color: #D8FA3C;">-</span> h x-el)
+          (<span style="color: #D8FA3C;">+</span> ar-cr (<span style="color: #D8FA3C;">*</span> 6 d))))
+
+    <span style="color: #4c83ff;">:ar-cr</span>
+    (fnk
+     [ar]
+     ar)
+
+    <span style="color: #4c83ff;">:sigma-r</span>
+    (fnk
+     [M-ser I-red-el <span style="color: #919191;">Zr</span> n']
+     (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">/</span> M-ser I-red-el)
+        <span style="color: #919191;">Zr</span>))
+
+    <span style="color: #4c83ff;">:x-el</span>
+    (fnk
+     [n' b h ar arc <span style="color: #919191;">Ar</span> <span style="color: #919191;">Arc</span>]
+     (<span style="color: #FF6400;">let</span> [a (<span style="color: #D8FA3C;">*</span> 1/2 b)
+           b (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Arc</span> <span style="color: #919191;">Ar</span>))
+           c (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">-</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> ar)
+                             (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> h)
+                             (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Arc</span> arc)))
+           D (<span style="color: #D8FA3C;">-</span> (pow b 2) (<span style="color: #D8FA3C;">*</span> 4 a c))]
+       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">-</span> b) (sqrt D))
+          2 a)))
+
+    <span style="color: #4c83ff;">:Zr</span>
+    (fnk
+     [x-el h ar]
+     (<span style="color: #D8FA3C;">-</span> h x-el ar))
+
+    <span style="color: #4c83ff;">:I-red-el</span>
+    (fnk
+     [<span style="color: #919191;">Ar</span> <span style="color: #919191;">Arc</span> n' h x-el ar arc b]
+     (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> 1/3 b (pow x-el 3))
+        (<span style="color: #D8FA3C;">*</span> n'
+           (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Arc</span> (pow (<span style="color: #D8FA3C;">-</span> x-el arc)  2))
+              (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span>  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar) 2))))))
+
+    <span style="color: #4c83ff;">:sigma-b</span>
+    (fnk
+     [I-red-el x-el M-ser]
+     (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">/</span> M-ser I-red-el) x-el))
+    }))
+</pre>
+</div>
+</div>
+</li></ol>
 </div>
 </div>
 
@@ -634,15 +941,15 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
     <span style="color: #4c83ff;">:omega</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rb</span>]
-     (<span style="color: #D8FA3C;">-</span> 0.85 (<span style="color: #D8FA3C;">*</span> ((<span style="color: #D8FA3C;">/</span> si/<span style="color: #919191;">MPa</span>) 0.008) <span style="color: #919191;">Rb</span>)))
+     [<span style="color: #919191;">Rc</span>]
+     (<span style="color: #D8FA3C;">-</span> 0.85 (<span style="color: #D8FA3C;">*</span> ((<span style="color: #D8FA3C;">/</span> si/<span style="color: #919191;">MPa</span>) 0.008) <span style="color: #919191;">Rc</span>)))
 
     <span style="color: #4c83ff;">:sigma-1</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rs</span> <span style="color: #919191;">Rp</span> sigma-p]
+     [<span style="color: #919191;">Rr</span> <span style="color: #919191;">Rp</span> sigma-p]
      (<span style="color: #FF6400;">if</span> (zero? sigma-p)
-       <span style="color: #919191;">Rs</span>
+       <span style="color: #919191;">Rr</span>
        (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Rp</span> (si/<span style="color: #919191;">MPa</span> 500) (<span style="color: #D8FA3C;">-</span> sigma-p))))
 
     <span style="color: #4c83ff;">:sigma-2</span>
@@ -658,37 +965,37 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
     <span style="color: #4c83ff;">:M-max</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rb</span> b x h0 h01 Asc-ef <span style="color: #919191;">Rsc</span> asc sigma-pc <span style="color: #919191;">Apc</span> apc]
-     (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rb</span> b x
+     [<span style="color: #919191;">Rc</span> b x h0 h01 Arc-ef <span style="color: #919191;">Rrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+     (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
            (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
-        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rsc</span> Asc-ef
-           (<span style="color: #D8FA3C;">-</span> h01 asc))
+        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rrc</span> Arc-ef
+           (<span style="color: #D8FA3C;">-</span> h01 arc))
         (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
            (<span style="color: #D8FA3C;">-</span> h0 apc))))
 
     <span style="color: #4c83ff;">:x</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rb</span> b <span style="color: #919191;">As</span> Asc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rsc</span> sigma-pc]
+     [<span style="color: #919191;">Rc</span> b <span style="color: #919191;">Ar</span> Arc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rrc</span> sigma-pc]
      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span>)
-           (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rsc</span> Asc-ef)
+           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>)
+           (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rrc</span> Arc-ef)
            (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
-        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rb</span> b)))
+        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
 
     <span style="color: #4c83ff;">:h01</span>
     (fnk
-     [h as]
-     (<span style="color: #D8FA3C;">-</span> h as))
+     [h ar]
+     (<span style="color: #D8FA3C;">-</span> h ar))
 
     <span style="color: #4c83ff;">:h0</span>
     (fnk
-     [h h01 ap <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>]
+     [h h01 ap <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>]
      (<span style="color: #FF6400;">if</span> (zero? <span style="color: #919191;">Ap</span>)
        h01
-       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span> h01)
+       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span> h01)
              (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span> (<span style="color: #D8FA3C;">-</span> h ap)))
-          (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">As</span> <span style="color: #919191;">Rs</span>)
+          (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> <span style="color: #919191;">Rr</span>)
              (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rp</span>)))))
 
     <span style="color: #4c83ff;">:sigma-pc</span>
@@ -702,10 +1009,81 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
     <span style="color: #4c83ff;">:M-max-sc</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span> h0 asc]
+     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> h0 arc]
      (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span>))
-        (<span style="color: #D8FA3C;">-</span> h0 asc)))
+           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>))
+        (<span style="color: #D8FA3C;">-</span> h0 arc)))
+    }))
+(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-crack-width-flow</span>
+  (flow
+   {
+    <span style="color: #4c83ff;">:a-cr</span>
+    (fnk
+     [sigma-r <span style="color: #919191;">Er</span> psi-cr]
+     (<span style="color: #D8FA3C;">*</span> psi-cr (<span style="color: #D8FA3C;">/</span> sigma-r <span style="color: #919191;">Er</span>)))
+
+    <span style="color: #4c83ff;">:psi-cr</span>
+    (fnk
+     [R-cr]
+     (si/cm (<span style="color: #D8FA3C;">*</span> 1.5 (sqrt (<span style="color: #4c83ff;">:magnitude</span> (si/cm R-cr))))))
+
+    <span style="color: #4c83ff;">:R-cr</span>
+    (fnk
+     [A-cr beta-cr nd d]
+     (<span style="color: #D8FA3C;">/</span> A-cr
+        beta-cr nd d))
+
+    <span style="color: #4c83ff;">:A-cr</span>
+    (fnk
+     [b hr]
+     (<span style="color: #D8FA3C;">*</span> b hr))
+
+    <span style="color: #4c83ff;">:hr</span>
+    (fnk
+     [ar-cr h x-el d]
+     (<span style="color: #D8FA3C;">min</span> (<span style="color: #D8FA3C;">-</span> h x-el)
+          (<span style="color: #D8FA3C;">+</span> ar-cr (<span style="color: #D8FA3C;">*</span> 6 d))))
+
+    <span style="color: #4c83ff;">:ar-cr</span>
+    (fnk
+     [ar]
+     ar)
+
+    <span style="color: #4c83ff;">:sigma-r</span>
+    (fnk
+     [M-ser I-red-el <span style="color: #919191;">Zr</span> n']
+     (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">/</span> M-ser I-red-el)
+        <span style="color: #919191;">Zr</span>))
+
+    <span style="color: #4c83ff;">:x-el</span>
+    (fnk
+     [n' b h ar arc <span style="color: #919191;">Ar</span> <span style="color: #919191;">Arc</span>]
+     (<span style="color: #FF6400;">let</span> [a (<span style="color: #D8FA3C;">*</span> 1/2 b)
+           b (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Arc</span> <span style="color: #919191;">Ar</span>))
+           c (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">-</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> ar)
+                             (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span> h)
+                             (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Arc</span> arc)))
+           D (<span style="color: #D8FA3C;">-</span> (pow b 2) (<span style="color: #D8FA3C;">*</span> 4 a c))]
+       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">-</span> b) (sqrt D))
+          2 a)))
+
+    <span style="color: #4c83ff;">:Zr</span>
+    (fnk
+     [x-el h ar]
+     (<span style="color: #D8FA3C;">-</span> h x-el ar))
+
+    <span style="color: #4c83ff;">:I-red-el</span>
+    (fnk
+     [<span style="color: #919191;">Ar</span> <span style="color: #919191;">Arc</span> n' h x-el ar arc b]
+     (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> 1/3 b (pow x-el 3))
+        (<span style="color: #D8FA3C;">*</span> n'
+           (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Arc</span> (pow (<span style="color: #D8FA3C;">-</span> x-el arc)  2))
+              (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Ar</span>  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar) 2))))))
+
+    <span style="color: #4c83ff;">:sigma-b</span>
+    (fnk
+     [I-red-el x-el M-ser]
+     (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">/</span> M-ser I-red-el) x-el))
     }))
 </pre>
 </div>
@@ -714,36 +1092,45 @@ M_{max,sc} = (R_p A_p + R_s A_s) (h_0 - a_{sc})
 <div id="outline-container-sec-1-3-3" class="outline-4">
 <h4 id="sec-1-3-3"><span class="section-number-4">1.3.3</span> Расчётные функции</h4>
 <div class="outline-text-4" id="text-1-3-3">
+</div><ol class="org-ol"><li>Расчет прочности бетонных сечений<br/><div class="outline-text-5" id="text-1-3-3-1">
+<p>
+Задаются параметры по умолчанию. Прозводится пробный расчет с учетом и
+без учета сжатой арматуры, выбирается расчетный случай. В зависимости
+от возможности учета сжатой арматуры определяется предельно допустимый
+изгибающий момент.
+</p>
+
 <div class="org-src-container">
 
 <pre class="src src-clojure">(<span style="color: #FF6400;">let</span> [lazy-rect (lazy-compile rect-bending-flow)
       lazy-xi   (lazy-compile xi-flow)]
   (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending</span>
     (fnk
-     {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rb</span> b h <span style="color: #919191;">Rs</span> <span style="color: #919191;">As</span> as] <span style="color: #4c83ff;">:as</span> args}
-     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Rsc</span> <span style="color: #919191;">Rs</span> <span style="color: #4c83ff;">:Asc</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:asc</span> (si/m 0)
+     {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> ar] <span style="color: #4c83ff;">:as</span> args}
+     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Rrc</span> <span style="color: #919191;">Rr</span> <span style="color: #4c83ff;">:Arc</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:arc</span> (si/m 0)
                          <span style="color: #4c83ff;">:Ap</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:Apc</span> ((pow si/m 2) 0)
                          <span style="color: #4c83ff;">:Rp</span>  (si/<span style="color: #919191;">MPa</span> 0) <span style="color: #4c83ff;">:Rpc</span> (si/<span style="color: #919191;">MPa</span> 500)
                          <span style="color: #4c83ff;">:ap</span> (si/m 0) <span style="color: #4c83ff;">:apc</span> (si/m 0)
                          <span style="color: #4c83ff;">:sigma-pc1</span> (si/<span style="color: #919191;">MPa</span> 0)
                          <span style="color: #4c83ff;">:sigma-p</span> (si/<span style="color: #919191;">MPa</span> 0)}
                         args)
-           no-<span style="color: #919191;">Asc</span>  (lazy-rect (<span style="color: #D8FA3C;">assoc</span> input <span style="color: #4c83ff;">:Asc-ef</span> ((pow si/m 2) 0)))
-           all-<span style="color: #919191;">Asc</span> (lazy-rect (<span style="color: #D8FA3C;">assoc</span> input <span style="color: #4c83ff;">:Asc-ef</span> (<span style="color: #4c83ff;">:Asc</span> input)))]
+           no-<span style="color: #919191;">Arc</span>  (lazy-rect (<span style="color: #D8FA3C;">assoc</span> input <span style="color: #4c83ff;">:Arc-ef</span> ((pow si/m 2) 0)))
+           all-<span style="color: #919191;">Arc</span> (lazy-rect (<span style="color: #D8FA3C;">assoc</span> input <span style="color: #4c83ff;">:Arc-ef</span> (<span style="color: #4c83ff;">:Arc</span> input)))]
        (lazy-xi (<span style="color: #FF6400;">cond</span>
-                 (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Asc</span>) (<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:asc</span> input))) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Asc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-                 (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Asc</span>)(<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:asc</span> input))) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Asc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-                 <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> no-<span style="color: #919191;">Asc</span> <span style="color: #4c83ff;">:M-max</span>)
-                              <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:asc</span> input)))))))))
+                 (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:arc</span> input))) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+                 (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:arc</span> input))) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+                 <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
+                              <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:arc</span> input)))))))))
 </pre>
 </div>
 </div>
+</li></ol>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2013-09-09 �� 16:49</p>
+<p class="date">Created: 2013-12-12 �� 11:24</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.0)</p>
 <p class="xhtml-validation"><a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a></p>
 </div>

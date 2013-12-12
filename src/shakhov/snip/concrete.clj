@@ -112,6 +112,77 @@
            (* Rr Ar))
         (- h0 arc)))
     }))
+(def rect-crack-width-flow
+  (flow
+   {
+    :a-cr
+    (fnk
+     [sigma-r Er psi-cr]
+     (* psi-cr (/ sigma-r Er)))
+    
+    :psi-cr
+    (fnk
+     [R-cr]
+     (si/cm (* 1.5 (sqrt (:magnitude (si/cm R-cr))))))
+    
+    :R-cr
+    (fnk
+     [A-cr beta-cr nd d]
+     (/ A-cr
+        beta-cr nd d))
+    
+    :A-cr
+    (fnk
+     [b hr]
+     (* b hr))
+    
+    :hr
+    (fnk
+     [ar-cr h x-el d]
+     (min (- h x-el)
+          (+ ar-cr (* 6 d))))
+    
+    :ar-cr
+    (fnk
+     [ar]
+     ar)
+    
+    :sigma-r
+    (fnk
+     [M-ser I-red-el Zr n']
+     (* n' (/ M-ser I-red-el)
+        Zr))
+    
+    :x-el
+    (fnk
+     [n' b h ar arc Ar Arc]
+     (let [a (* 1/2 b)
+           b (* n' (+ Arc Ar))
+           c (* n' (- (* Ar ar)
+                             (* Ar h)
+                             (* Arc arc)))
+           D (- (pow b 2) (* 4 a c))]
+       (/ (+ (- b) (sqrt D))
+          2 a)))
+    
+    :Zr
+    (fnk
+     [x-el h ar]
+     (- h x-el ar))
+    
+    :I-red-el
+    (fnk
+     [Ar Arc n' h x-el ar arc b]
+     (+ (* 1/3 b (pow x-el 3))
+        (* n'
+           (+ (* Arc (pow (- x-el arc)  2))
+              (* Ar  (pow (- h x-el ar) 2))))))
+    
+    :sigma-b
+    (fnk
+     [I-red-el x-el M-ser]
+     (* (/ M-ser I-red-el) x-el))
+    }))
 
 (let [lazy-rect (lazy-compile rect-bending-flow)
       lazy-xi   (lazy-compile xi-flow)]
