@@ -74,26 +74,37 @@
     :x
     (fnk
      ""
-     [Rc b Ar Arc-ef Ap Apc Rr Rp Rrc sigma-pc]
+     [Rc b Arc-ef Ap Apc Rp Rrc sigma-pc Nr]
      (/ (+ (* Rp Ap)
-           (* Rr Ar)
+           Nr
            (* -1 Rrc Arc-ef)
            (* -1 sigma-pc Apc))
         (* Rc b)))
+    
+    :Nr
+    (fnk
+     [Ari Rri]
+     (apply + (map * Ari Rri)))
     
     :h01
     (fnk
      [h ar]
      (- h ar))
     
+    :ar
+    (fnk
+     [Nr Ari Rri ari]
+     (/ (apply + (map * Ari Rri ari))
+        Nr))
+    
     :h0
     (fnk
-     [h h01 ap Ar Rr Ap Rp]
+     [h h01 ap Nr Ap Rp]
      (if (zero? Ap)
        h01
-       (/ (+ (* Ar Rr h01)
+       (/ (+ (* Nr h01)
              (* Ap Rp (- h ap)))
-          (+ (* Ar Rr)
+          (+ Nr
              (* Ap Rp)))))
     
     :sigma-pc
@@ -111,6 +122,28 @@
      (* (+ (* Rp Ap)
            (* Rr Ar))
         (- h0 arc)))
+    
+    :Ari
+    (fnk
+     [reinf]
+     (map (fn [{:keys [n d rebar]}]
+            (* n ((:A rebar) d)))
+          (:bottom reinf)))
+    
+    :Rri
+    (fnk
+     [reinf]
+     (map #(get-in % [:rebar :Rr]) (:bottom reinf)))
+    
+    :ari
+    (fnk
+     [reinf]
+     (map :z (:bottom reinf)))
+    
+    :Ar
+    (fnk
+     [Ari]
+     (apply + Ari))
     }))
 (def rect-crack-width-flow
   (flow
@@ -188,8 +221,8 @@
       lazy-xi   (lazy-compile xi-flow)]
   (def rect-bending
     (fnk
-     {:keys [Rc b h Rr Ar ar] :as args}
-     (let [input (merge {:Rrc Rr :Arc ((pow si/m 2) 0) :arc (si/m 0)
+     {:keys [Rc b h reinf] :as args}
+     (let [input (merge {:Rrc (si/MPa 0.0) :Arc ((pow si/m 2) 0) :arc (si/m 0)
                          :Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
                          :Rp  (si/MPa 0) :Rpc (si/MPa 500)
                          :ap (si/m 0) :apc (si/m 0)

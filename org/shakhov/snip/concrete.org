@@ -5,7 +5,7 @@
 
 ** Расчет по прочности нормальных сечений
 
-*** $\xi$ --- относительная высота сжатой зоны
+*** TODO $\xi$ --- относительная высота сжатой зоны
 :PROPERTIES:
 :noweb-ref: xi-y
 :END:
@@ -114,46 +114,73 @@ M \le M_{max} = R_c b x (h_0 - 0.5 x) + R_{rc} A_{rc,ef} (h_{01} - a_{rc}) + \si
 
 Высота сжатой зоны определяется по формуле:
 \begin{equation}
-x = \frac{R_p A_p + R_r A_r - R_{rc} A_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
+x = \frac{R_p A_p + N_r - R_{rc} A_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
 \end{equation}
 
 #+begin_src clojure
   :x
   (fnk
    ""
-   [Rc b Ar Arc-ef Ap Apc Rr Rp Rrc sigma-pc]
+   [Rc b Arc-ef Ap Apc Rp Rrc sigma-pc Nr]
    (/ (+ (* Rp Ap)
-         (* Rr Ar)
+         Nr
          (* -1 Rrc Arc-ef)
          (* -1 sigma-pc Apc))
       (* Rc b)))
 #+end_src
 
+**** $N_r$ --- равнодействующая усилий в растянутой ненапрягаемой арматуре
+Суммарное предельное усилие в растянутой арматуре $N_r$ вычисляется по формуле:
+\begin{equation}
+N_r = \sum\limits_i A_{r,i} R_{r,i}
+\end{equation}
+
+#+begin_src clojure
+  :Nr
+  (fnk
+   [Ari Rri]
+   (apply + (map * Ari Rri)))
+#+end_src
+
 **** $h_0$, $h_{01}$ --- рабочая высота сечения
 
 Рабочая высота для ненапрягаемой арматуры равна $h_{01} = h - a_r$.
-
-Рабочая высота сечения $h_0$ принимается от равнодействующий усилий в напрягаемой и ненапрягаемой арматуре.
-\begin{equation}
-h_0 = \cfrac{A_r R_r h_{01} + A_p R_p (h - a_p)}{A_r R_r + A_p R_p}
-\end{equation}
-
-При отсутствии напрягаемой арматуры $h_0 = h_{01}$.
-
 #+begin_src clojure
   :h01
   (fnk
    [h ar]
    (- h ar))
+#+end_src
 
+$a_r$ --- расстояние от растянутой грани бетона до центра тяжести
+растянутой ненапрягаемой арматуры
+\begin{equation}
+a_r = \cfrac{\sum_i A_{r,i}R_{r,i} a_{r,i}}{N_r}
+\end{equation}
+#+begin_src clojure
+  :ar
+  (fnk
+   [Nr Ari Rri ari]
+   (/ (apply + (map * Ari Rri ari))
+      Nr))
+#+end_src
+
+Рабочая высота сечения $h_0$ принимается от равнодействующей усилий в напрягаемой и ненапрягаемой арматуре.
+\begin{equation}
+h_0 = \cfrac{N_r h_{01} + A_p R_p (h - a_p)}{N_r + A_p R_p}
+\end{equation}
+
+При отсутствии напрягаемой арматуры $h_0 = h_{01}$.
+
+#+begin_src clojure
   :h0
   (fnk
-   [h h01 ap Ar Rr Ap Rp]
+   [h h01 ap Nr Ap Rp]
    (if (zero? Ap)
      h01
-     (/ (+ (* Ar Rr h01)
+     (/ (+ (* Nr h01)
            (* Ap Rp (- h ap)))
-        (+ (* Ar Rr)
+        (+ Nr
            (* Ap Rp)))))
 #+end_src
 
@@ -177,7 +204,7 @@ h_0 = \cfrac{A_r R_r h_{01} + A_p R_p (h - a_p)}{A_r R_r + A_p R_p}
      (- Rpc sigma-pc1)))
 #+end_src
 
-**** Учет сжатой ненапрягаемой арматуры
+**** TODO Учет сжатой ненапрягаемой арматуры
 Ненапрягаемая арматура сжатой зоны  $A_{rc}$ учитывается полностью ($A_{rc,ef} = A_{rc}$), если $x_2 \ge 2a_{rc}$, где $x_2$ --- высота сжатой зоны, вычесленная с учетом $A_{rc}$.
 При $x_1 < 2a_{rc}$ арматура $A_{rc}$ не учитывается ($A_{rc,ef} = 0$).
 Если без учета сжатой арматуры высота сжатой зоны $x_1\le 2a_{rc}$, а при учете сжатой арматуры $x_2 < 2 a_{rc}$, то предельный момент допускается вычислять по формуле:
@@ -204,6 +231,32 @@ M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
       }))
 #+end_src
 
+**** Растянутая арматура
+Параметры растянутой арматуры извлекаются из структуры исходных данных
+
+#+begin_src clojure
+  :Ari
+  (fnk
+   [reinf]
+   (map (fn [{:keys [n d rebar]}]
+          (* n ((:A rebar) d)))
+        (:bottom reinf)))
+
+  :Rri
+  (fnk
+   [reinf]
+   (map #(get-in % [:rebar :Rr]) (:bottom reinf)))
+
+  :ari
+  (fnk
+   [reinf]
+   (map :z (:bottom reinf)))
+
+  :Ar
+  (fnk
+   [Ari]
+   (apply + Ari))
+#+end_src
 
 ** Расчет ширины раскрытия нормальных трещин
 
@@ -249,7 +302,7 @@ a_{cr} = \cfrac{\sigma_r}{E_r}\psi_{cr} \le \Delta_{cr}
 **** Радиус армирования
 Радиус армирования определяется по формуле:
 \begin{equation}
-R_{cr} = \cfrac{A_{cr}}{\Sigma \beta n d}
+R_{cr} = \cfrac{A_{cr}}{\sum \beta n d}
 \end{equation}
 
 где:
@@ -425,8 +478,8 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
         lazy-xi   (lazy-compile xi-flow)]
     (def rect-bending
       (fnk
-       {:keys [Rc b h Rr Ar ar] :as args}
-       (let [input (merge {:Rrc Rr :Arc ((pow si/m 2) 0) :arc (si/m 0)
+       {:keys [Rc b h reinf] :as args}
+       (let [input (merge {:Rrc (si/MPa 0.0) :Arc ((pow si/m 2) 0) :arc (si/m 0)
                            :Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
                            :Rp  (si/MPa 0) :Rpc (si/MPa 500)
                            :ap (si/m 0) :apc (si/m 0)

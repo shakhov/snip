@@ -21,74 +21,49 @@
   [d]
   (* 1/4 Math/PI d d))
 
+(comment (binding [*logger* {:pre (fn [f k i] (prn k))
+                             :post (fn [f k i o] (prn k "=" o))}]))
+
 (let [pile-cap-long-bottom {:h (si/cm 100.0)
                             :b (si/cm 100.0)
                             :d (si/mm 18)
                             :nd 6.0
-                            :Ar (* 6.0 (circle-area (si/mm 18)))
-                            :ar (si/mm 120)
+                            :reinf {:bottom [{:rebar rebar/AIII
+                                              :z (si/mm 120)
+                                              :d (si/mm 18)
+                                              :n 6}
+                                             {:rebar rebar/AIII
+                                              :z (si/mm 70)
+                                              :d (si/mm 18)
+                                              :n 10}]}
                             :Arc (* 6.0 (circle-area (si/mm 20)))
                             :arc (si/mm 70.0)
                             :M-ser (si/tonf*m 24.92)}
-      pile-cap-long-top {:h (si/cm 100.0)
-                         :b (si/cm 100.0)
-                         :d (si/mm 20)
-                         :nd 6.0
-                         :Ar (* 6.0 (circle-area (si/mm 20)))
-                         :ar (si/mm 70.0)
-                         :Arc (* 6.0 (circle-area (si/mm 18)))
-                         :arc (si/mm 120.0)
-                         :M-ser (si/tonf*m 33.67)}
-       pile-cap-trans-top {:h (si/cm 100.0)
-                           :b (si/cm 100.0)
-                           :d (si/mm 28)
-                           :nd 6.0
-                           :Ar (* 6.0 (circle-area (si/mm 28)))
-                           :ar (si/mm 120.0)
-                           :Arc (* 6.0 (circle-area (si/mm 22)))
-                           :arc (si/mm 70.0)
-                           :M-ser (si/tonf*m 54.33)}
-      pile-cap-trans-bottom {:h (si/cm 100.0)
-                             :b (si/cm 100.0)
-                             :d (si/mm 22)
-                             :nd 6.0
-                             :Ar (* 6.0 (circle-area (si/mm 22)))
-                             :ar (si/mm 70.0)
-                             :Arc (* 6.0 (circle-area (si/mm 28)))
-                             :arc (si/mm 120.0)
-                             :M-ser (si/tonf*m 43.25)}
       csI (mapv #(rect-bending (merge % concrete/B30 rebar/AIII))
-               [pile-cap-long-bottom
-                pile-cap-long-top
-                pile-cap-trans-top
-                pile-cap-trans-bottom])
-      csII (mapv #((lazy-compile rect-crack-width-flow)
-                   (merge % {:beta-cr 1.0} concrete/B30 rebar/AIII))
-               [pile-cap-long-bottom
-                pile-cap-long-top
-                pile-cap-trans-top
-                pile-cap-trans-bottom])]
+                [pile-cap-long-bottom
+                 ])
+      ;; csII (mapv #((lazy-compile rect-crack-width-flow)
+      ;;              (merge % {:beta-cr 1.0} concrete/B30 rebar/AIII))
+      ;;            [pile-cap-long-bottom])
+      ]
   (defn pile-cap-I
     []
     (println "Расчет на прочность:")
     (println (vtable {:table {:width 64}
                       :cols [{:title "Вдоль, низ"
-                             :key #(nth % 1)}
-                            {:title "Вдоль, верх"
-                             :key #(nth % 2)}
-                            {:title "Поперек, низ"
-                             :key #(nth % 3)}
-                            {:title "Поперек, верх"
-                             :key #(nth % 4)}]
+                              :key #(nth % 1)}]
                       :rows [{:title "Рабочая высота - h0, cм"
-                             :key :h0
-                             :format (format-units si/cm "%.1f")}
+                              :key :h0
+                              :format (format-units si/cm "%.1f")}
                              {:title "Высота сжатой зоны - x, см"
                               :key :x
                               :format (format-units si/cm "%.2f")}
                              {:title "Растянутая арматура - As, см2"
                               :key :Ar
                               :format (format-units (pow si/cm 2) "%.2f")}
+                             {:title "Центр тяжести - as, см"
+                              :key :ar
+                              :format (format-units si/cm "%.2f")}
                              {:title "Сжатая арматура Asc, см2"
                               :key :Arc
                               :format (format-units (pow si/cm 2) "%.2f")}
@@ -105,40 +80,41 @@
                               :key :M-max
                               :format (format-units si/tonf*m "%.1f")}]}
                      csI)))
-  (defn pile-cap-II
-    []
-    (println "Расчет на раскрытие трещин:")
-    (println (vtable {:table {:width 64}
-                      :cols [{:title "Вдоль, низ"
-                             :key #(nth % 1)}
-                            {:title "Вдоль, верх"
-                             :key #(nth % 2)}
-                            {:title "Поперек, низ"
-                             :key #(nth % 3)}
-                            {:title "Поперек, верх"
-                             :key #(nth % 4)}]
-                     :rows [{:title "Высота сжатой зоны - x, см"
-                             :key :x-el
-                             :format (format-units si/cm "%.2f")}
-                            {:title "Растянутая арматура - As, см2"
-                             :key :Ar
-                             :format (format-units (pow si/cm 2) "%.2f")}
-                            {:title "Сжатая арматура Asc, см2"
-                             :key :Arc
-                             :format (format-units (pow si/cm 2) "%.2f")}
-                            {:title "Момент инерции - Iel, м4"
-                             :key :I-red-el
-                             :format (format-units (pow si/cm 4) "%.3G")}
-                            {:title "Напряжения в бетоне - sb, кг/cм2"
-                             :key :sigma-b
-                             :format (format-units si/kgf:cm2 "%.2f")}
-                            {:title "Предельные напряж. - Rb,mc2, кг/cм2"
-                             :key :Rc-mc2
-                             :format (format-units si/kgf:cm2 "%.2f")}
-                            {:title "Напряжения в арматуре - sr, кг/cм2"
-                             :key :sigma-r
-                             :format (format-units si/kgf:cm2 "%.2f")}
-                            {:title "Ширина раскрытия трещин a-cr, см"
-                             :key :a-cr
-                             :format (format-units si/cm "%.3f")}]}
-                     csII))))
+  ;; (defn pile-cap-II
+  ;;   []
+  ;;   (println "Расчет на раскрытие трещин:")
+  ;;   (println (vtable {:table {:width 64}
+  ;;                     :cols [{:title "Вдоль, низ"
+  ;;                            :key #(nth % 1)}
+  ;;                           {:title "Вдоль, верх"
+  ;;                            :key #(nth % 2)}
+  ;;                           {:title "Поперек, низ"
+  ;;                            :key #(nth % 3)}
+  ;;                           {:title "Поперек, верх"
+  ;;                            :key #(nth % 4)}]
+  ;;                    :rows [{:title "Высота сжатой зоны - x, см"
+  ;;                            :key :x-el
+  ;;                            :format (format-units si/cm "%.2f")}
+  ;;                           {:title "Растянутая арматура - As, см2"
+  ;;                            :key :Ar
+  ;;                            :format (format-units (pow si/cm 2) "%.2f")}
+  ;;                           {:title "Сжатая арматура Asc, см2"
+  ;;                            :key :Arc
+  ;;                            :format (format-units (pow si/cm 2) "%.2f")}
+  ;;                           {:title "Момент инерции - Iel, м4"
+  ;;                            :key :I-red-el
+  ;;                            :format (format-units (pow si/cm 4) "%.3G")}
+  ;;                           {:title "Напряжения в бетоне - sb, кг/cм2"
+  ;;                            :key :sigma-b
+  ;;                            :format (format-units si/kgf:cm2 "%.2f")}
+  ;;                           {:title "Предельные напряж. - Rb,mc2, кг/cм2"
+  ;;                            :key :Rc-mc2
+  ;;                            :format (format-units si/kgf:cm2 "%.2f")}
+  ;;                           {:title "Напряжения в арматуре - sr, кг/cм2"
+  ;;                            :key :sigma-r
+  ;;                            :format (format-units si/kgf:cm2 "%.2f")}
+  ;;                           {:title "Ширина раскрытия трещин a-cr, см"
+  ;;                            :key :a-cr
+  ;;                            :format (format-units si/cm "%.3f")}]}
+  ;;                    csII)))
+  )
