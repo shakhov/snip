@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>concrete</title>
-<!-- 2013-12-12 �� 13:08 -->
+<!-- 2013-12-13 �� 14:22 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="generator" content="Org-mode"/>
 <style type="text/css">
@@ -362,7 +362,7 @@ for the JavaScript code in this tag.
 Предельно допустимый момент при изгибе прямоугольных железобетонных сечений вычисляется по формуле:
 </p>
 \begin{equation}
-M \le M_{max} = R_c b x (h_0 - 0.5 x) + R_{rc} A_{rc,ef} (h_{01} - a_{rc}) + \sigma_{pc} A_{pc} (h_0 - a_p)
+M \le M_{max} = R_c b x (h_0 - 0.5 x) + N_{rc,ef} (h_{01} - a_{rc}) + \sigma_{pc} A_{pc} (h_0 - a_p)
 \end{equation}
 
 <div class="org-src-container">
@@ -370,10 +370,10 @@ M \le M_{max} = R_c b x (h_0 - 0.5 x) + R_{rc} A_{rc,ef} (h_{01} - a_{rc}) + \si
 <pre class="src src-clojure"><span style="color: #4c83ff;">:M-max</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rc</span> b x h0 h01 Arc-ef <span style="color: #919191;">Rrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+ [<span style="color: #919191;">Rc</span> b x h0 h01 Nrc-ef arc sigma-pc <span style="color: #919191;">Apc</span> apc]
  (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
        (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
-    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rrc</span> Arc-ef
+    (<span style="color: #D8FA3C;">*</span> Nrc-ef
        (<span style="color: #D8FA3C;">-</span> h01 arc))
     (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
        (<span style="color: #D8FA3C;">-</span> h0 apc))))
@@ -386,7 +386,7 @@ M \le M_{max} = R_c b x (h_0 - 0.5 x) + R_{rc} A_{rc,ef} (h_{01} - a_{rc}) + \si
 Высота сжатой зоны определяется по формуле:
 </p>
 \begin{equation}
-x = \frac{R_p A_p + N_r - R_{rc} A_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
+x = \frac{R_p A_p + N_r - N_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
 \end{equation}
 
 <div class="org-src-container">
@@ -394,17 +394,81 @@ x = \frac{R_p A_p + N_r - R_{rc} A_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
 <pre class="src src-clojure"><span style="color: #4c83ff;">:x</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rc</span> b Arc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rrc</span> sigma-pc <span style="color: #919191;">Nr</span>]
+ [<span style="color: #919191;">Rc</span> b <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> sigma-pc <span style="color: #919191;">Nr</span> Nrc-ef]
  (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
        <span style="color: #919191;">Nr</span>
-       (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rrc</span> Arc-ef)
+       (<span style="color: #D8FA3C;">*</span> -1 Nrc-ef)
        (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
     (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
 </pre>
 </div>
 </div>
 </li>
-<li>\(N_r\) &#x2014; равнодействующая усилий в растянутой ненапрягаемой арматуре<br/><div class="outline-text-5" id="text-1-1-2-3">
+<li>Растянутая арматура<br/><div class="outline-text-5" id="text-1-1-2-3">
+<p>
+Параметры растянутой арматуры извлекаются из структуры исходных данных
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:Ari</span>
+(fnk
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+        (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
+      (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+<span style="color: #4c83ff;">:Rri</span>
+(fnk
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+<span style="color: #4c83ff;">:ari</span>
+(fnk
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+<span style="color: #4c83ff;">:Ar</span>
+(fnk
+ [<span style="color: #919191;">Ari</span>]
+ (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
+</pre>
+</div>
+</div>
+</li>
+<li>Учитываемая сжатая араматура<br/><div class="outline-text-5" id="text-1-1-2-4">
+<p>
+Параметры сжатой арматуры извлекаются из структуры исходных данных
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:Arc-ef-i</span>
+(fnk
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+        (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
+      (<span style="color: #4c83ff;">:top</span> reinf)))
+
+<span style="color: #4c83ff;">:Rrci</span>
+(fnk
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:top</span> reinf)))
+
+<span style="color: #4c83ff;">:arci</span>
+(fnk
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:top</span> reinf)))
+
+<span style="color: #4c83ff;">:Arc-ef</span>
+(fnk
+ [Arc-ef-i]
+ (<span style="color: #D8FA3C;">apply</span> + Arc-ef-i))
+</pre>
+</div>
+</div>
+</li>
+<li>\(N_r\) &#x2014; равнодействующая усилий в растянутой ненапрягаемой арматуре<br/><div class="outline-text-5" id="text-1-1-2-5">
 <p>
 Суммарное предельное усилие в растянутой арматуре \(N_r\) вычисляется по формуле:
 </p>
@@ -422,19 +486,26 @@ N_r = \sum\limits_i A_{r,i} R_{r,i}
 </div>
 </div>
 </li>
-<li>\(h_0\), \(h_{01}\) &#x2014; рабочая высота сечения<br/><div class="outline-text-5" id="text-1-1-2-4">
+<li>\(N_{rc,ef}\) &#x2014; равнодействующая усилий в учитываемой сжатой ненапрягаемой арматуре<br/><div class="outline-text-5" id="text-1-1-2-6">
 <p>
-Рабочая высота для ненапрягаемой арматуры равна \(h_{01} = h - a_r\).
+Суммарное предельное усилие в учитываемой в расчете сжатой арматуре \(N_{rc,ef}\) вычисляется по формуле:
 </p>
+\begin{equation}
+N_{rc,ef} = \sum\limits_i A_{rc,ef,i} R_{rc,i}
+\end{equation}
+
 <div class="org-src-container">
 
-<pre class="src src-clojure"><span style="color: #4c83ff;">:h01</span>
+<pre class="src src-clojure"><span style="color: #4c83ff;">:Nrc-ef</span>
 (fnk
- [h ar]
- (<span style="color: #D8FA3C;">-</span> h ar))
+ [Arc-ef-i <span style="color: #919191;">Rrci</span>]
+ (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * Arc-ef-i <span style="color: #919191;">Rrci</span>)))
 </pre>
 </div>
+</div>
+</li>
 
+<li>Центр тяжести сжатой и растянутой арматуры<br/><div class="outline-text-5" id="text-1-1-2-7">
 <p>
 \(a_r\) &#x2014; расстояние от растянутой грани бетона до центра тяжести
 растянутой ненапрягаемой арматуры
@@ -449,6 +520,40 @@ a_r = \cfrac{\sum_i A_{r,i}R_{r,i} a_{r,i}}{N_r}
  [<span style="color: #919191;">Nr</span> <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span> ari]
  (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span> ari))
     <span style="color: #919191;">Nr</span>))
+</pre>
+</div>
+
+<p>
+\(a_{rc}\) &#x2014; расстояние от сжатой грани бетона до центра тяжести
+сжатой ненапрягаемой арматуры
+</p>
+\begin{equation}
+a_{rc} = \cfrac{\sum_i A_{rc,ef,i} R_{rc,i} a_{rc,i}} {N_{rc}}
+\end{equation}
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:arc</span>
+(fnk
+ [Nrc-ef Arc-ef-i <span style="color: #919191;">Rrci</span> arci]
+ (<span style="color: #FF6400;">if</span> (zero? Nrc-ef)
+   (si/cm 0)
+   (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * Arc-ef-i <span style="color: #919191;">Rrci</span> arci))
+      Nrc-ef)))
+</pre>
+</div>
+</div>
+</li>
+
+<li>\(h_0\), \(h_{01}\) &#x2014; рабочая высота сечения<br/><div class="outline-text-5" id="text-1-1-2-8">
+<p>
+Рабочая высота для ненапрягаемой сжатой арматуры равна \(h_{01} = h - a_r\).
+</p>
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:h01</span>
+(fnk
+ [h ar]
+ (<span style="color: #D8FA3C;">-</span> h ar))
 </pre>
 </div>
 
@@ -478,7 +583,7 @@ h_0 = \cfrac{N_r h_{01} + A_p R_p (h - a_p)}{N_r + A_p R_p}
 </div>
 </div>
 </li>
-<li>Учет напрягаемой сжатой арматуры<br/><div class="outline-text-5" id="text-1-1-2-5">
+<li>Учет напрягаемой сжатой арматуры<br/><div class="outline-text-5" id="text-1-1-2-9">
 <p>
 Напрягаемую арматуру, распложоженную в сжатой зоне и имеющую сцепление с бетоном, следует вводить в расчёт с напряжением:
 </p>
@@ -509,14 +614,14 @@ h_0 = \cfrac{N_r h_{01} + A_p R_p (h - a_p)}{N_r + A_p R_p}
 </div>
 </div>
 </li>
-<li><span class="todo TODO">TODO</span> Учет сжатой ненапрягаемой арматуры<br/><div class="outline-text-5" id="text-1-1-2-6">
+<li>Учет сжатой ненапрягаемой арматуры<br/><div class="outline-text-5" id="text-1-1-2-10">
 <p>
 Ненапрягаемая арматура сжатой зоны  \(A_{rc}\) учитывается полностью (\(A_{rc,ef} = A_{rc}\)), если \(x_2 \ge 2a_{rc}\), где \(x_2\) &#x2014; высота сжатой зоны, вычесленная с учетом \(A_{rc}\).
 При \(x_1 < 2a_{rc}\) арматура \(A_{rc}\) не учитывается (\(A_{rc,ef} = 0\)).
 Если без учета сжатой арматуры высота сжатой зоны \(x_1\le 2a_{rc}\), а при учете сжатой арматуры \(x_2 < 2 a_{rc}\), то предельный момент допускается вычислять по формуле:
 </p>
 \begin{equation}
-M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
+M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
 \end{equation}
 
 <div class="org-src-container">
@@ -524,15 +629,14 @@ M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
 <pre class="src src-clojure"><span style="color: #4c83ff;">:M-max-sc</span>
 (fnk
  <span style="color: #61CE3C;">""</span>
- [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> h0 arc]
- (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-       (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>))
+ [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Nr</span> h0 arc]
+ (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Nr</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>))
     (<span style="color: #D8FA3C;">-</span> h0 arc)))
 </pre>
 </div>
 </div>
 </li>
-<li>Код потока<br/><div class="outline-text-5" id="text-1-1-2-7">
+<li>Код потока<br/><div class="outline-text-5" id="text-1-1-2-11">
 <div class="org-src-container">
 
 <pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending-flow</span>
@@ -541,10 +645,10 @@ M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
     <span style="color: #4c83ff;">:M-max</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rc</span> b x h0 h01 Arc-ef <span style="color: #919191;">Rrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+     [<span style="color: #919191;">Rc</span> b x h0 h01 Nrc-ef arc sigma-pc <span style="color: #919191;">Apc</span> apc]
      (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
            (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
-        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rrc</span> Arc-ef
+        (<span style="color: #D8FA3C;">*</span> Nrc-ef
            (<span style="color: #D8FA3C;">-</span> h01 arc))
         (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
            (<span style="color: #D8FA3C;">-</span> h0 apc))))
@@ -552,28 +656,85 @@ M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
     <span style="color: #4c83ff;">:x</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rc</span> b Arc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rrc</span> sigma-pc <span style="color: #919191;">Nr</span>]
+     [<span style="color: #919191;">Rc</span> b <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> sigma-pc <span style="color: #919191;">Nr</span> Nrc-ef]
      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
            <span style="color: #919191;">Nr</span>
-           (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rrc</span> Arc-ef)
+           (<span style="color: #D8FA3C;">*</span> -1 Nrc-ef)
            (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
         (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
+
+    <span style="color: #4c83ff;">:Ari</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+            (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
+          (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+    <span style="color: #4c83ff;">:Rri</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+    <span style="color: #4c83ff;">:ari</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+    <span style="color: #4c83ff;">:Ar</span>
+    (fnk
+     [<span style="color: #919191;">Ari</span>]
+     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
+
+    <span style="color: #4c83ff;">:Arc-ef-i</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+            (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
+          (<span style="color: #4c83ff;">:top</span> reinf)))
+
+    <span style="color: #4c83ff;">:Rrci</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:top</span> reinf)))
+
+    <span style="color: #4c83ff;">:arci</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:top</span> reinf)))
+
+    <span style="color: #4c83ff;">:Arc-ef</span>
+    (fnk
+     [Arc-ef-i]
+     (<span style="color: #D8FA3C;">apply</span> + Arc-ef-i))
 
     <span style="color: #4c83ff;">:Nr</span>
     (fnk
      [<span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>]
      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
 
-    <span style="color: #4c83ff;">:h01</span>
+    <span style="color: #4c83ff;">:Nrc-ef</span>
     (fnk
-     [h ar]
-     (<span style="color: #D8FA3C;">-</span> h ar))
+     [Arc-ef-i <span style="color: #919191;">Rrci</span>]
+     (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * Arc-ef-i <span style="color: #919191;">Rrci</span>)))
 
     <span style="color: #4c83ff;">:ar</span>
     (fnk
      [<span style="color: #919191;">Nr</span> <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span> ari]
      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span> ari))
         <span style="color: #919191;">Nr</span>))
+
+    <span style="color: #4c83ff;">:arc</span>
+    (fnk
+     [Nrc-ef Arc-ef-i <span style="color: #919191;">Rrci</span> arci]
+     (<span style="color: #FF6400;">if</span> (zero? Nrc-ef)
+       (si/cm 0)
+       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * Arc-ef-i <span style="color: #919191;">Rrci</span> arci))
+          Nrc-ef)))
+
+    <span style="color: #4c83ff;">:h01</span>
+    (fnk
+     [h ar]
+     (<span style="color: #D8FA3C;">-</span> h ar))
 
     <span style="color: #4c83ff;">:h0</span>
     (fnk
@@ -596,65 +757,10 @@ M_{max,sc} = (R_p A_p + R_r A_r) (h_0 - a_{rc})
     <span style="color: #4c83ff;">:M-max-sc</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> h0 arc]
-     (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>))
+     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Nr</span> h0 arc]
+     (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Nr</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>))
         (<span style="color: #D8FA3C;">-</span> h0 arc)))
-
-    <span style="color: #4c83ff;">:Ari</span>
-    (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-            (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-          (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-    <span style="color: #4c83ff;">:Rri</span>
-    (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-    <span style="color: #4c83ff;">:ari</span>
-    (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:z</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-    <span style="color: #4c83ff;">:Ar</span>
-    (fnk
-     [<span style="color: #919191;">Ari</span>]
-     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
     }))
-</pre>
-</div>
-</div>
-</li>
-<li>Растянутая арматура<br/><div class="outline-text-5" id="text-1-1-2-8">
-<p>
-Параметры растянутой арматуры извлекаются из структуры исходных данных
-</p>
-
-<div class="org-src-container">
-
-<pre class="src src-clojure"><span style="color: #4c83ff;">:Ari</span>
-(fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-        (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-      (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-<span style="color: #4c83ff;">:Rri</span>
-(fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-<span style="color: #4c83ff;">:ari</span>
-(fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:z</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-<span style="color: #4c83ff;">:Ar</span>
-(fnk
- [<span style="color: #919191;">Ari</span>]
- (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
 </pre>
 </div>
 </div>
@@ -1067,10 +1173,10 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
     <span style="color: #4c83ff;">:M-max</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rc</span> b x h0 h01 Arc-ef <span style="color: #919191;">Rrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+     [<span style="color: #919191;">Rc</span> b x h0 h01 Nrc-ef arc sigma-pc <span style="color: #919191;">Apc</span> apc]
      (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
            (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
-        (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rrc</span> Arc-ef
+        (<span style="color: #D8FA3C;">*</span> Nrc-ef
            (<span style="color: #D8FA3C;">-</span> h01 arc))
         (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
            (<span style="color: #D8FA3C;">-</span> h0 apc))))
@@ -1078,28 +1184,85 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
     <span style="color: #4c83ff;">:x</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rc</span> b Arc-ef <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Rrc</span> sigma-pc <span style="color: #919191;">Nr</span>]
+     [<span style="color: #919191;">Rc</span> b <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> sigma-pc <span style="color: #919191;">Nr</span> Nrc-ef]
      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
            <span style="color: #919191;">Nr</span>
-           (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rrc</span> Arc-ef)
+           (<span style="color: #D8FA3C;">*</span> -1 Nrc-ef)
            (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
         (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
+
+    <span style="color: #4c83ff;">:Ari</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+            (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
+          (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+    <span style="color: #4c83ff;">:Rri</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+    <span style="color: #4c83ff;">:ari</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
+
+    <span style="color: #4c83ff;">:Ar</span>
+    (fnk
+     [<span style="color: #919191;">Ari</span>]
+     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
+
+    <span style="color: #4c83ff;">:Arc-ef-i</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+            (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
+          (<span style="color: #4c83ff;">:top</span> reinf)))
+
+    <span style="color: #4c83ff;">:Rrci</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:top</span> reinf)))
+
+    <span style="color: #4c83ff;">:arci</span>
+    (fnk
+     [reinf]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:top</span> reinf)))
+
+    <span style="color: #4c83ff;">:Arc-ef</span>
+    (fnk
+     [Arc-ef-i]
+     (<span style="color: #D8FA3C;">apply</span> + Arc-ef-i))
 
     <span style="color: #4c83ff;">:Nr</span>
     (fnk
      [<span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>]
      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
 
-    <span style="color: #4c83ff;">:h01</span>
+    <span style="color: #4c83ff;">:Nrc-ef</span>
     (fnk
-     [h ar]
-     (<span style="color: #D8FA3C;">-</span> h ar))
+     [Arc-ef-i <span style="color: #919191;">Rrci</span>]
+     (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * Arc-ef-i <span style="color: #919191;">Rrci</span>)))
 
     <span style="color: #4c83ff;">:ar</span>
     (fnk
      [<span style="color: #919191;">Nr</span> <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span> ari]
      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span> ari))
         <span style="color: #919191;">Nr</span>))
+
+    <span style="color: #4c83ff;">:arc</span>
+    (fnk
+     [Nrc-ef Arc-ef-i <span style="color: #919191;">Rrci</span> arci]
+     (<span style="color: #FF6400;">if</span> (zero? Nrc-ef)
+       (si/cm 0)
+       (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * Arc-ef-i <span style="color: #919191;">Rrci</span> arci))
+          Nrc-ef)))
+
+    <span style="color: #4c83ff;">:h01</span>
+    (fnk
+     [h ar]
+     (<span style="color: #D8FA3C;">-</span> h ar))
 
     <span style="color: #4c83ff;">:h0</span>
     (fnk
@@ -1122,32 +1285,9 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
     <span style="color: #4c83ff;">:M-max-sc</span>
     (fnk
      <span style="color: #61CE3C;">""</span>
-     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span> h0 arc]
-     (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
-           (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rr</span> <span style="color: #919191;">Ar</span>))
+     [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Nr</span> h0 arc]
+     (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Nr</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>))
         (<span style="color: #D8FA3C;">-</span> h0 arc)))
-
-    <span style="color: #4c83ff;">:Ari</span>
-    (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-            (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-          (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-    <span style="color: #4c83ff;">:Rri</span>
-    (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-    <span style="color: #4c83ff;">:ari</span>
-    (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:z</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
-
-    <span style="color: #4c83ff;">:Ar</span>
-    (fnk
-     [<span style="color: #919191;">Ari</span>]
-     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
     }))
 (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-crack-width-flow</span>
   (flow
@@ -1242,20 +1382,21 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
   (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending</span>
     (fnk
      {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h reinf] <span style="color: #4c83ff;">:as</span> args}
-     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Rrc</span> (si/<span style="color: #919191;">MPa</span> 0.0) <span style="color: #4c83ff;">:Arc</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:arc</span> (si/m 0)
-                         <span style="color: #4c83ff;">:Ap</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:Apc</span> ((pow si/m 2) 0)
+     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Ap</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:Apc</span> ((pow si/m 2) 0)
                          <span style="color: #4c83ff;">:Rp</span>  (si/<span style="color: #919191;">MPa</span> 0) <span style="color: #4c83ff;">:Rpc</span> (si/<span style="color: #919191;">MPa</span> 500)
                          <span style="color: #4c83ff;">:ap</span> (si/m 0) <span style="color: #4c83ff;">:apc</span> (si/m 0)
                          <span style="color: #4c83ff;">:sigma-pc1</span> (si/<span style="color: #919191;">MPa</span> 0)
                          <span style="color: #4c83ff;">:sigma-p</span> (si/<span style="color: #919191;">MPa</span> 0)}
                         args)
-           no-<span style="color: #919191;">Arc</span>  (lazy-rect (<span style="color: #D8FA3C;">assoc</span> input <span style="color: #4c83ff;">:Arc-ef</span> ((pow si/m 2) 0)))
-           all-<span style="color: #919191;">Arc</span> (lazy-rect (<span style="color: #D8FA3C;">assoc</span> input <span style="color: #4c83ff;">:Arc-ef</span> (<span style="color: #4c83ff;">:Arc</span> input)))]
-       (lazy-xi (<span style="color: #FF6400;">cond</span>
-                 (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:arc</span> input))) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-                 (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:arc</span> input))) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+           no-<span style="color: #919191;">Arc</span>  (lazy-rect (<span style="color: #D8FA3C;">update-in</span> input [<span style="color: #4c83ff;">:reinf</span> <span style="color: #4c83ff;">:top</span>]
+                                         (<span style="color: #FBDE2D;">fn</span> [t]
+                                           (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
+           all-<span style="color: #919191;">Arc</span> (lazy-rect input)
+           arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)] (lazy-xi (<span style="color: #FF6400;">cond</span>
+                 (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+                 (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
                  <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
-                              <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 (<span style="color: #4c83ff;">:arc</span> input)))))))))
+                              <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc))))))))
 </pre>
 </div>
 </div>
@@ -1265,7 +1406,7 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2013-12-12 �� 13:08</p>
+<p class="date">Created: 2013-12-13 �� 14:22</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.0)</p>
 <p class="xhtml-validation"><a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a></p>
 </div>
