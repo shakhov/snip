@@ -89,22 +89,21 @@
 :NAME: rect-bending
 :noweb-ref: rect-bending
 :END:
-
 **** $M_{max}$ --- предельный момент
 
 Предельно допустимый момент при изгибе прямоугольных железобетонных сечений вычисляется по формуле:
 \begin{equation}
-M \le M_{max} = R_c b x (h_0 - 0.5 x) + N_{rc,ef} (h_{01} - a_{rc}) + \sigma_{pc} A_{pc} (h_0 - a_p)
+M \le M_{max} = R_c b x (h_0 - 0.5 x) + N_{rc} (h_{01} - a_{rc}) + \sigma_{pc} A_{pc} (h_0 - a_p)
 \end{equation}
 
 #+begin_src clojure
   :M-max
   (fnk
    ""
-   [Rc b x h0 h01 Nrc-ef arc sigma-pc Apc apc]
+   [Rc b x h0 h01 Nrc arc sigma-pc Apc apc]
    (+ (* Rc b x
          (- h0 (* 0.5 x)))
-      (* Nrc-ef
+      (* Nrc
          (- h01 arc))
       (* sigma-pc Apc
          (- h0 apc))))
@@ -114,17 +113,17 @@ M \le M_{max} = R_c b x (h_0 - 0.5 x) + N_{rc,ef} (h_{01} - a_{rc}) + \sigma_{pc
 
 Высота сжатой зоны определяется по формуле:
 \begin{equation}
-x = \frac{R_p A_p + N_r - N_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
+x = \frac{R_p A_p + N_r - N_{rc} - \sigma_{pc} A_{pc}} {R_c b}
 \end{equation}
 
 #+begin_src clojure
   :x
   (fnk
    ""
-   [Rc b Ap Apc Rp sigma-pc Nr Nrc-ef]
+   [Rc b Ap Apc Rp sigma-pc Nr Nrc]
    (/ (+ (* Rp Ap)
          Nr
-         (* -1 Nrc-ef)
+         (* -1 Nrc)
          (* -1 sigma-pc Apc))
       (* Rc b)))
 #+end_src
@@ -160,7 +159,7 @@ x = \frac{R_p A_p + N_r - N_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
 Параметры сжатой арматуры извлекаются из структуры исходных данных
 
 #+begin_src clojure
-  :Arc-ef-i
+  :Arci
   (fnk
    [reinf]
    (map (fn [{:keys [n d rebar]}]
@@ -177,10 +176,10 @@ x = \frac{R_p A_p + N_r - N_{rc,ef} - \sigma_{pc} A_{pc}} {R_c b}
    [reinf]
    (map :ar (:top reinf)))
 
-  :Arc-ef
+  :Arc
   (fnk
-   [Arc-ef-i]
-   (apply + Arc-ef-i))
+   [Arci]
+   (apply + Arci))
 #+end_src
 
 **** $N_r$ --- равнодействующая усилий в растянутой ненапрягаемой арматуре
@@ -196,17 +195,17 @@ N_r = \sum\limits_i A_{r,i} R_{r,i}
    (apply + (map * Ari Rri)))
 #+end_src
 
-**** $N_{rc,ef}$ --- равнодействующая усилий в учитываемой сжатой ненапрягаемой арматуре
-Суммарное предельное усилие в учитываемой в расчете сжатой арматуре $N_{rc,ef}$ вычисляется по формуле:
+**** $N_{rc}$ --- равнодействующая усилий в учитываемой сжатой ненапрягаемой арматуре
+Суммарное предельное усилие в учитываемой в расчете сжатой арматуре $N_{rc}$ вычисляется по формуле:
 \begin{equation}
-N_{rc,ef} = \sum\limits_i A_{rc,ef,i} R_{rc,i}
+N_{rc} = \sum\limits_i A_{rc,i} R_{rc,i}
 \end{equation}
 
 #+begin_src clojure
-  :Nrc-ef
-  (fnk
-   [Arc-ef-i Rrci]
-   (apply + (map * Arc-ef-i Rrci)))
+ :Nrc
+ (fnk
+   [Arci Rrci]
+   (apply + (map * Arci Rrci)))
 #+end_src
 
 
@@ -227,16 +226,16 @@ a_r = \cfrac{\sum_i A_{r,i}R_{r,i} a_{r,i}}{N_r}
 $a_{rc}$ --- расстояние от сжатой грани бетона до центра тяжести
 сжатой ненапрягаемой арматуры
 \begin{equation}
-a_{rc} = \cfrac{\sum_i A_{rc,ef,i} R_{rc,i} a_{rc,i}} {N_{rc}}
+a_{rc} = \cfrac{\sum_i A_{rc,i} R_{rc,i} a_{rc,i}} {N_{rc}}
 \end{equation}
 #+begin_src clojure
   :arc
   (fnk
-   [Nrc-ef Arc-ef-i Rrci arci]
-   (if (zero? Nrc-ef)
+   [Nrc Arci Rrci arci]
+   (if (zero? Nrc)
      (si/cm 0)
-     (/ (apply + (map * Arc-ef-i Rrci arci))
-        Nrc-ef)))
+     (/ (apply + (map * Arci Rrci arci))
+        Nrc)))
 #+end_src
 
 
@@ -290,8 +289,8 @@ h_0 = \cfrac{N_r h_{01} + A_p R_p (h - a_p)}{N_r + A_p R_p}
 #+end_src
 
 **** Учет сжатой ненапрягаемой арматуры
-Ненапрягаемая арматура сжатой зоны  $A_{rc}$ учитывается полностью ($A_{rc,ef} = A_{rc}$), если $x_2 \ge 2a_{rc}$, где $x_2$ --- высота сжатой зоны, вычесленная с учетом $A_{rc}$.
-При $x_1 < 2a_{rc}$ арматура $A_{rc}$ не учитывается ($A_{rc,ef} = 0$).
+Ненапрягаемая арматура сжатой зоны  $A_{rc}$ учитывается полностью ($A_{rc} = A_{rc}$), если $x_2 \ge 2a_{rc}$, где $x_2$ --- высота сжатой зоны, вычесленная с учетом $A_{rc}$.
+При $x_1 < 2a_{rc}$ арматура $A_{rc}$ не учитывается ($A_{rc} = 0$).
 Если без учета сжатой арматуры высота сжатой зоны $x_1\le 2a_{rc}$, а при учете сжатой арматуры $x_2 < 2 a_{rc}$, то предельный момент допускается вычислять по формуле:
 \begin{equation}
 M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
@@ -316,7 +315,6 @@ M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
 #+end_src
 
 ** Расчет ширины раскрытия нормальных трещин
-
 *** Прямоугольные сечения без преднапрягаемой арматуры
 :PROPERTIES:
 :NAME: rect-crack-width
@@ -340,6 +338,19 @@ a_{cr} = \cfrac{\sigma_r}{E_r}\psi_{cr} \le \Delta_{cr}
   (fnk
    [sigma-r Er psi-cr]
    (* psi-cr (/ sigma-r Er)))
+#+end_src
+
+Предельно допустимый момент при условии $a_{cr} = \Delta_{cr}$
+\begin{equation}
+M_{max,cr} = \cfrac{\Delta_{cr}}{\psi_{cr}} \cfrac{E_r I_{red,el}}{n' Z_r}
+\end{equation}
+
+#+begin_src clojure
+  :M-max-cr
+  (fnk
+   [delta-cr Er I-red-el n' Zr psi-cr]
+   (/ (* delta-cr Er I-red-el)
+      (* n' Zr psi-cr)))
 #+end_src
 
 **** Коэффициент раскрытия трещин $\psi$
@@ -371,9 +382,13 @@ R_{cr} = \cfrac{A_{cr}}{\sum \beta n d}
 #+begin_src clojure
   :R-cr
   (fnk
-   [A-cr beta-cr nd d]
-   (/ A-cr
-      beta-cr nd d))
+   [A-cr reinf]
+   (let [r (:bottom reinf)
+         d (map :d r)
+         n (map :n r)
+         beta-cr (map :beta-cr r)]
+     (/ A-cr
+        (apply + (map * beta-cr d n)))))
 #+end_src
 
 **** Площадь зоны взаимодействия $A_{cr}$
@@ -394,14 +409,28 @@ A_{cr} = b h_r = b (a_{r,cr} + 6d)
 
   :hr
   (fnk
-   [ar-cr h x-el d]
+   [ar-cr h x-el d-cr]
    (min (- h x-el)
-        (+ ar-cr (* 6 d))))
+        (+ ar-cr (* 6 d-cr))))
+#+end_src
 
-  :ar-cr
+Расстояние от растянутой грани сечения до крайнего в сторону
+нейтральной оси стержня арматуры, при условии, что в данном крайнем
+ряду стержней содержится не менее половины площади арматуры по
+отношению ко всем другим рядам стержней.
+
+#+begin_src clojure
+  [ar-cr d-cr]
   (fnk
-   [ar]
-   ar)
+   [reinf]
+   (let [rb (:bottom reinf)
+         rb (map (fn [{:keys [rebar n d] :as row}]
+                   (assoc row :Ar (* n ((:A rebar) d))))
+                 rb)
+         Ar-max (apply max (map :Ar rb))]
+     (map (apply max-key :ar (filter #(>= (:Ar %) (* 0.5 Ar-max))
+                                     rb))
+          [:ar :d])))
 #+end_src
 
 **** Напряжения в растянутой арматуре $\sigma_r$
@@ -433,42 +462,85 @@ A_{cr} = b h_r = b (a_{r,cr} + 6d)
 бетона сжатой зоны определяется через равенство статических моментов
 сжатого бетона, сжатой арматуры и растянутой арматуры:
 \begin{equation}
-\cfrac{b x_{el}^2}{2} + n' \left(A_{rc}(x_{el}-a_{rc}) - A_r (h - x_{el} - a_r) \right) = 0
+\cfrac{b x_{el}^2}{2} + n' \left(A_{rc,red}(x_{el}-a_{rc,red}) - A_{r,red} (h - x_{el} - a_{r,red}) \right) = 0
 \end{equation}
 где $x_{el}$ --- высота сжатой зоны бетона.
 
 #+begin_src clojure
   :x-el
   (fnk
-   [n' b h ar arc Ar Arc]
-   (let [a (* 1/2 b)
-         b (* n' (+ Arc Ar))
-         c (* n' (- (* Ar ar)
-                           (* Ar h)
-                           (* Arc arc)))
-         D (- (pow b 2) (* 4 a c))]
-     (/ (+ (- b) (sqrt D))
-        2 a)))
+   [n' b h Ar-red Arc-red ar-red arc-red]
+   (let [A (* 1/2 b)
+         B (* n' (+ Ar-red Arc-red))
+         C (* n' (- (* Ar-red ar-red)
+                    (* Ar-red h)
+                    (* Arc-red arc-red)))
+         D (- (pow B 2) (* 4 A C))]
+     (/ (+ (- B) (sqrt D))
+        2 A)))
 
   :Zr
   (fnk
-   [x-el h ar]
-   (- h x-el ar))
+   [x-el h ar-red]
+   (- h x-el ar-red))
 #+end_src
 
 Момент инерции сечения:
 \begin{equation}
-I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r (h - x_{el} - a_r)^2 \right)
+I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left(A_{rc,red} (x_{el} - a_{rc,red})^2 +  A_{r,red} (h - x_{el} - a_{r,red})^2 \right)
 \end{equation}
 
 #+begin_src clojure
   :I-red-el
   (fnk
-   [Ar Arc n' h x-el ar arc b]
+   [Ar-red Arc-red n' b h x-el ar-red arc-red]
    (+ (* 1/3 b (pow x-el 3))
       (* n'
-         (+ (* Arc (pow (- x-el arc)  2))
-            (* Ar  (pow (- h x-el ar) 2))))))
+         (+ (* Arc-red (pow (- x-el arc-red)  2))
+            (* Ar-red  (pow (- h x-el ar-red) 2))))))
+#+end_src
+
+Характеристики арматурных стержней приводятся к одному классу арматуры:
+#+begin_src clojure
+  :Ar-red
+  (fnk
+   [reinf Er]
+   (apply + (map (fn [{:keys [n d rebar]}]
+                   (* n ((:A rebar) d)
+                      (/ (:Er rebar)
+                         Er)))
+                 (:bottom reinf))))
+
+  :Arc-red
+  (fnk
+   [reinf Er]
+   (apply + (map (fn [{:keys [n d rebar]}]
+                   (* n ((:A rebar) d)
+                      (/ (:Er rebar)
+                         Er)))
+                 (:top reinf))))
+
+  :ar-red
+  (fnk
+   [reinf Ar-red Er]
+   (/ (apply + (map (fn [{:keys [n d rebar ar]}]
+                      (* ar
+                         n ((:A rebar) d)
+                         (/ (:Er rebar)
+                            Er)))
+                    (:bottom reinf)))
+      Ar-red))
+
+  :arc-red
+  (fnk
+   [reinf Arc-red Er]
+   (/ (apply + (map (fn [{:keys [n d rebar ar]}]
+                      (* ar
+                         n ((:A rebar) d)
+                         (/ (:Er rebar)
+                            Er)))
+                    (:top reinf)))
+      Arc-red))
 #+end_src
 
 **** Проверка трещиностойкости сжатого бетона
@@ -479,20 +551,36 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left( A_{rc} (x_{el} - a_{rc})^2 + A_r 
 \end{equation}
 
 #+begin_src clojure
-  :sigma-b
+  :sigma-c
   (fnk
    [I-red-el x-el M-ser]
    (* (/ M-ser I-red-el) x-el))
 #+end_src
 
+Предельный момент при условии $\sigma_c = R_{c,mc2}$
+\begin{equation}
+M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
+\end{equation}
+
+#+begin_src clojure
+  :M-max-mc2
+  (fnk
+   [I-red-el x-el Rc-mc2]
+   (/ (* Rc-mc2 I-red-el)
+      x-el))
+#+end_src
+
 **** Код потока
 #+begin_src clojure :noweb yes :noweb-ref rect-crack-width-flow
   (def rect-crack-width-flow
-    (flow
-     {
-      <<rect-crack-width>>
-      }))
+    (merge
+     (flow
+      {
+       <<rect-crack-width>>
+       })
+     (select-keys rect-bending-flow [:Ar :Arc])))
 #+end_src
+
 ** Код модуля
 :PROPERTIES:
 :noweb: yes

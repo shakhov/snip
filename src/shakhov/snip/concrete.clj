@@ -63,10 +63,10 @@
     :M-max
     (fnk
      ""
-     [Rc b x h0 h01 Nrc-ef arc sigma-pc Apc apc]
+     [Rc b x h0 h01 Nrc arc sigma-pc Apc apc]
      (+ (* Rc b x
            (- h0 (* 0.5 x)))
-        (* Nrc-ef
+        (* Nrc
            (- h01 arc))
         (* sigma-pc Apc
            (- h0 apc))))
@@ -74,10 +74,10 @@
     :x
     (fnk
      ""
-     [Rc b Ap Apc Rp sigma-pc Nr Nrc-ef]
+     [Rc b Ap Apc Rp sigma-pc Nr Nrc]
      (/ (+ (* Rp Ap)
            Nr
-           (* -1 Nrc-ef)
+           (* -1 Nrc)
            (* -1 sigma-pc Apc))
         (* Rc b)))
     
@@ -103,7 +103,7 @@
      [Ari]
      (apply + Ari))
     
-    :Arc-ef-i
+    :Arci
     (fnk
      [reinf]
      (map (fn [{:keys [n d rebar]}]
@@ -120,20 +120,20 @@
      [reinf]
      (map :ar (:top reinf)))
     
-    :Arc-ef
+    :Arc
     (fnk
-     [Arc-ef-i]
-     (apply + Arc-ef-i))
+     [Arci]
+     (apply + Arci))
     
     :Nr
     (fnk
      [Ari Rri]
      (apply + (map * Ari Rri)))
     
-    :Nrc-ef
+    :Nrc
     (fnk
-     [Arc-ef-i Rrci]
-     (apply + (map * Arc-ef-i Rrci)))
+      [Arci Rrci]
+      (apply + (map * Arci Rrci)))
     
     :ar
     (fnk
@@ -143,11 +143,11 @@
     
     :arc
     (fnk
-     [Nrc-ef Arc-ef-i Rrci arci]
-     (if (zero? Nrc-ef)
+     [Nrc Arci Rrci arci]
+     (if (zero? Nrc)
        (si/cm 0)
-       (/ (apply + (map * Arc-ef-i Rrci arci))
-          Nrc-ef)))
+       (/ (apply + (map * Arci Rrci arci))
+          Nrc)))
     
     :h01
     (fnk
@@ -180,76 +180,141 @@
         (- h0 arc)))
     }))
 (def rect-crack-width-flow
-  (flow
-   {
-    :a-cr
-    (fnk
-     [sigma-r Er psi-cr]
-     (* psi-cr (/ sigma-r Er)))
-    
-    :psi-cr
-    (fnk
-     [R-cr]
-     (si/cm (* 1.5 (sqrt (:magnitude (si/cm R-cr))))))
-    
-    :R-cr
-    (fnk
-     [A-cr beta-cr nd d]
-     (/ A-cr
-        beta-cr nd d))
-    
-    :A-cr
-    (fnk
-     [b hr]
-     (* b hr))
-    
-    :hr
-    (fnk
-     [ar-cr h x-el d]
-     (min (- h x-el)
-          (+ ar-cr (* 6 d))))
-    
-    :ar-cr
-    (fnk
-     [ar]
-     ar)
-    
-    :sigma-r
-    (fnk
-     [M-ser I-red-el Zr n']
-     (* n' (/ M-ser I-red-el)
-        Zr))
-    
-    :x-el
-    (fnk
-     [n' b h ar arc Ar Arc]
-     (let [a (* 1/2 b)
-           b (* n' (+ Arc Ar))
-           c (* n' (- (* Ar ar)
-                             (* Ar h)
-                             (* Arc arc)))
-           D (- (pow b 2) (* 4 a c))]
-       (/ (+ (- b) (sqrt D))
-          2 a)))
-    
-    :Zr
-    (fnk
-     [x-el h ar]
-     (- h x-el ar))
-    
-    :I-red-el
-    (fnk
-     [Ar Arc n' h x-el ar arc b]
-     (+ (* 1/3 b (pow x-el 3))
-        (* n'
-           (+ (* Arc (pow (- x-el arc)  2))
-              (* Ar  (pow (- h x-el ar) 2))))))
-    
-    :sigma-b
-    (fnk
-     [I-red-el x-el M-ser]
-     (* (/ M-ser I-red-el) x-el))
-    }))
+  (merge
+   (flow
+    {
+     :a-cr
+     (fnk
+      [sigma-r Er psi-cr]
+      (* psi-cr (/ sigma-r Er)))
+     
+     :M-max-cr
+     (fnk
+      [delta-cr Er I-red-el n' Zr psi-cr]
+      (/ (* delta-cr Er I-red-el)
+         (* n' Zr psi-cr)))
+     
+     :psi-cr
+     (fnk
+      [R-cr]
+      (si/cm (* 1.5 (sqrt (:magnitude (si/cm R-cr))))))
+     
+     :R-cr
+     (fnk
+      [A-cr reinf]
+      (let [r (:bottom reinf)
+            d (map :d r)
+            n (map :n r)
+            beta-cr (map :beta-cr r)]
+        (/ A-cr
+           (apply + (map * beta-cr d n)))))
+     
+     :A-cr
+     (fnk
+      [b hr]
+      (* b hr))
+     
+     :hr
+     (fnk
+      [ar-cr h x-el d-cr]
+      (min (- h x-el)
+           (+ ar-cr (* 6 d-cr))))
+     
+     [ar-cr d-cr]
+     (fnk
+      [reinf]
+      (let [rb (:bottom reinf)
+            rb (map (fn [{:keys [rebar n d] :as row}]
+                      (assoc row :Ar (* n ((:A rebar) d))))
+                    rb)
+            Ar-max (apply max (map :Ar rb))]
+        (map (apply max-key :ar (filter #(>= (:Ar %) (* 0.5 Ar-max))
+                                        rb))
+             [:ar :d])))
+     
+     :sigma-r
+     (fnk
+      [M-ser I-red-el Zr n']
+      (* n' (/ M-ser I-red-el)
+         Zr))
+     
+     :x-el
+     (fnk
+      [n' b h Ar-red Arc-red ar-red arc-red]
+      (let [A (* 1/2 b)
+            B (* n' (+ Ar-red Arc-red))
+            C (* n' (- (* Ar-red ar-red)
+                       (* Ar-red h)
+                       (* Arc-red arc-red)))
+            D (- (pow B 2) (* 4 A C))]
+        (/ (+ (- B) (sqrt D))
+           2 A)))
+     
+     :Zr
+     (fnk
+      [x-el h ar-red]
+      (- h x-el ar-red))
+     
+     :I-red-el
+     (fnk
+      [Ar-red Arc-red n' b h x-el ar-red arc-red]
+      (+ (* 1/3 b (pow x-el 3))
+         (* n'
+            (+ (* Arc-red (pow (- x-el arc-red)  2))
+               (* Ar-red  (pow (- h x-el ar-red) 2))))))
+     
+     :Ar-red
+     (fnk
+      [reinf Er]
+      (apply + (map (fn [{:keys [n d rebar]}]
+                      (* n ((:A rebar) d)
+                         (/ (:Er rebar)
+                            Er)))
+                    (:bottom reinf))))
+     
+     :Arc-red
+     (fnk
+      [reinf Er]
+      (apply + (map (fn [{:keys [n d rebar]}]
+                      (* n ((:A rebar) d)
+                         (/ (:Er rebar)
+                            Er)))
+                    (:top reinf))))
+     
+     :ar-red
+     (fnk
+      [reinf Ar-red Er]
+      (/ (apply + (map (fn [{:keys [n d rebar ar]}]
+                         (* ar
+                            n ((:A rebar) d)
+                            (/ (:Er rebar)
+                               Er)))
+                       (:bottom reinf)))
+         Ar-red))
+     
+     :arc-red
+     (fnk
+      [reinf Arc-red Er]
+      (/ (apply + (map (fn [{:keys [n d rebar ar]}]
+                         (* ar
+                            n ((:A rebar) d)
+                            (/ (:Er rebar)
+                               Er)))
+                       (:top reinf)))
+         Arc-red))
+     
+     :sigma-c
+     (fnk
+      [I-red-el x-el M-ser]
+      (* (/ M-ser I-red-el) x-el))
+     
+     :M-max-mc2
+     (fnk
+      [I-red-el x-el Rc-mc2]
+      (/ (* Rc-mc2 I-red-el)
+         x-el))
+     })
+   (select-keys rect-bending-flow [:Ar :Arc])))
 
 (let [lazy-rect (lazy-compile rect-bending-flow)
       lazy-xi   (lazy-compile xi-flow)]
