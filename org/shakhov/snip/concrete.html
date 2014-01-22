@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>concrete</title>
-<!-- 2014-01-21 �� 15:24 -->
+<!-- 2014-01-22 �� 13:47 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="generator" content="Org-mode"/>
 <style type="text/css">
@@ -185,11 +185,13 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#sec-1-1-1">1.1.1. \(\xi\) &#x2014; относительная высота сжатой зоны</a></li>
 <li><a href="#sec-1-1-2">1.1.2. Расчёт прямоугольных сечений</a></li>
+<li><a href="#sec-1-1-3">1.1.3. Расчет тавровых сечений</a></li>
 </ul>
 </li>
 <li><a href="#sec-1-2">1.2. Расчет ширины раскрытия нормальных трещин</a>
 <ul>
 <li><a href="#sec-1-2-1">1.2.1. Прямоугольные сечения без преднапрягаемой арматуры</a></li>
+<li><a href="#sec-1-2-2">1.2.2. Тавровые сечения без преднапрягаемой арматуры</a></li>
 </ul>
 </li>
 <li><a href="#sec-1-3">1.3. Код модуля</a>
@@ -765,6 +767,96 @@ M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
 </div>
 </li></ol>
 </div>
+
+<div id="outline-container-sec-1-1-3" class="outline-4">
+<h4 id="sec-1-1-3"><span class="section-number-4">1.1.3</span> Расчет тавровых сечений</h4>
+<div class="outline-text-4" id="text-1-1-3">
+</div>
+<ol class="org-ol"><li>\(M_{max}\) &#x2014; Предельный момент<br/><div class="outline-text-5" id="text-1-1-3-1">
+<p>
+Если граница сжатой зоны проходит в ребре, предельный момент определяется по формуле:
+</p>
+\begin{equation}
+M_{max} = R_c b x (h_0 - 0.5 x) + R_c (b_f - b) h_f (h_0 - 0.5 h_f)
+ + N_{rc} (h_{01} - a_{rc}) + \sigma_{pc} A_{pc} (h_0 - a_p)
+\end{equation}
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"> <span style="color: #4c83ff;">:M-max</span>
+(fnk
+ <span style="color: #61CE3C;">""</span>
+ [<span style="color: #919191;">Rc</span> b x bf hf h0 h01 <span style="color: #919191;">Nrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+ (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
+       (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
+    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> (<span style="color: #D8FA3C;">-</span> bf b) hf
+       (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 hf)))
+    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Nrc</span>
+       (<span style="color: #D8FA3C;">-</span> h01 arc))
+    (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
+       (<span style="color: #D8FA3C;">-</span> h0 apc))))
+</pre>
+</div>
+</div>
+</li>
+<li>Высота сжатой зоны при условии, что нейтральная ось проходит в ребре<br/><div class="outline-text-5" id="text-1-1-3-2">
+\begin{equation}
+x = \frac{R_p A_p + N_r - N_{rc} - \sigma_{pc} A_{pc} - R_c h_f (b_f - b)} {R_c b}
+\end{equation}
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:x</span>
+(fnk
+ <span style="color: #61CE3C;">""</span>
+ [<span style="color: #919191;">Rc</span> b bf hf <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> sigma-pc <span style="color: #919191;">Nr</span> <span style="color: #919191;">Nrc</span>]
+ (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
+       <span style="color: #919191;">Nr</span>
+       (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Nrc</span>)
+       (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>)
+       (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rc</span> hf (<span style="color: #D8FA3C;">-</span> bf b)))
+    (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
+</pre>
+</div>
+</div>
+</li>
+
+<li>Код потока<br/><div class="outline-text-5" id="text-1-1-3-3">
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-bending-flow</span>
+  (<span style="color: #D8FA3C;">merge</span> rect-bending-flow
+         (flow
+          {
+            <span style="color: #4c83ff;">:M-max</span>
+           (fnk
+            <span style="color: #61CE3C;">""</span>
+            [<span style="color: #919191;">Rc</span> b x bf hf h0 h01 <span style="color: #919191;">Nrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+            (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
+                  (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
+               (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> (<span style="color: #D8FA3C;">-</span> bf b) hf
+                  (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 hf)))
+               (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Nrc</span>
+                  (<span style="color: #D8FA3C;">-</span> h01 arc))
+               (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
+                  (<span style="color: #D8FA3C;">-</span> h0 apc))))
+
+           <span style="color: #4c83ff;">:x</span>
+           (fnk
+            <span style="color: #61CE3C;">""</span>
+            [<span style="color: #919191;">Rc</span> b bf hf <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> sigma-pc <span style="color: #919191;">Nr</span> <span style="color: #919191;">Nrc</span>]
+            (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
+                  <span style="color: #919191;">Nr</span>
+                  (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Nrc</span>)
+                  (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>)
+                  (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rc</span> hf (<span style="color: #D8FA3C;">-</span> bf b)))
+               (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
+           })))
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
 </div>
 <div id="outline-container-sec-1-2" class="outline-3">
 <h3 id="sec-1-2"><span class="section-number-3">1.2</span> Расчет ширины раскрытия нормальных трещин</h3>
@@ -1256,7 +1348,118 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
 </div>
 </li></ol>
 </div>
+
+<div id="outline-container-sec-1-2-2" class="outline-4">
+<h4 id="sec-1-2-2"><span class="section-number-4">1.2.2</span> Тавровые сечения без преднапрягаемой арматуры</h4>
+<div class="outline-text-4" id="text-1-2-2">
 </div>
+
+<ol class="org-ol"><li>Геометрические характеристики приведенного сечения<br/><div class="outline-text-5" id="text-1-2-2-1">
+<p>
+Положение нейтральной оси приведенного к бетону сечения без учета
+бетона сжатой зоны определяется через равенство статических моментов
+сжатого бетона, сжатой арматуры и растянутой арматуры:
+</p>
+\begin{equation}
+\cfrac{b x_{el}^2}{2} + h_f (b_f - b) \left (x_{el} - \cfrac{h_f}{2} \right)
+ + n' \left(A_{rc,red}(x_{el}-a_{rc,red}) - A_{r,red} (h - x_{el} - a_{r,red}) \right) = 0
+\end{equation}
+<p>
+где \(x_{el}\) &#x2014; высота сжатой зоны бетона.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:x-el</span>
+(fnk
+ [n' b h bf hf Ar-red Arc-red ar-red arc-red]
+ (<span style="color: #FF6400;">let</span> [A (<span style="color: #D8FA3C;">*</span> 1/2 b)
+       B (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">+</span> Ar-red Arc-red))
+            (<span style="color: #D8FA3C;">*</span> hf (<span style="color: #D8FA3C;">-</span> bf b)))
+       C (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">-</span> (<span style="color: #D8FA3C;">*</span> Ar-red ar-red)
+                     (<span style="color: #D8FA3C;">*</span> Ar-red h)
+                     (<span style="color: #D8FA3C;">*</span> Arc-red arc-red)))
+            (<span style="color: #D8FA3C;">*</span> -1/2 hf hf (<span style="color: #D8FA3C;">-</span> bf b)))
+       D (<span style="color: #D8FA3C;">-</span> (pow B 2) (<span style="color: #D8FA3C;">*</span> 4 A C))]
+   (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">-</span> B) (sqrt D))
+      2 A)))
+
+<span style="color: #4c83ff;">:Zr</span>
+(fnk
+ [x-el h ar-red]
+ (<span style="color: #D8FA3C;">-</span> h x-el ar-red))
+</pre>
+</div>
+
+<p>
+Момент инерции сечения:
+</p>
+\begin{equation}
+I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
++ h_f (b_f - b) \left (x_{el} - \cfrac{h_f}{2} \right)^2
++ n' \left(A_{rc,red} (x_{el} - a_{rc,red})^2 +  A_{r,red} (h - x_{el} - a_{r,red})^2 \right)
+\end{equation}
+
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:I-red-el</span>
+(fnk
+ [Ar-red Arc-red n' b h hf bf x-el ar-red arc-red]
+ (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> 1/3 b (pow x-el 3))
+    (<span style="color: #D8FA3C;">*</span> 1/12 (<span style="color: #D8FA3C;">-</span> bf b) (pow hf 3))
+    (<span style="color: #D8FA3C;">*</span> hf (<span style="color: #D8FA3C;">-</span> bf b) (pow (<span style="color: #D8FA3C;">-</span> x-el (<span style="color: #D8FA3C;">*</span> 0.5 hf)) 2))
+    (<span style="color: #D8FA3C;">*</span> n'
+       (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> Arc-red (pow (<span style="color: #D8FA3C;">-</span> x-el arc-red)  2))
+          (<span style="color: #D8FA3C;">*</span> Ar-red  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar-red) 2))))))
+</pre>
+</div>
+</div>
+</li>
+<li>Код потока<br/><div class="outline-text-5" id="text-1-2-2-2">
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-crack-width-flow</span>
+  (<span style="color: #D8FA3C;">merge</span>
+   rect-crack-width-flow
+   (flow
+    {
+     <span style="color: #4c83ff;">:x-el</span>
+     (fnk
+      [n' b h bf hf Ar-red Arc-red ar-red arc-red]
+      (<span style="color: #FF6400;">let</span> [A (<span style="color: #D8FA3C;">*</span> 1/2 b)
+            B (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">+</span> Ar-red Arc-red))
+                 (<span style="color: #D8FA3C;">*</span> hf (<span style="color: #D8FA3C;">-</span> bf b)))
+            C (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">-</span> (<span style="color: #D8FA3C;">*</span> Ar-red ar-red)
+                          (<span style="color: #D8FA3C;">*</span> Ar-red h)
+                          (<span style="color: #D8FA3C;">*</span> Arc-red arc-red)))
+                 (<span style="color: #D8FA3C;">*</span> -1/2 hf hf (<span style="color: #D8FA3C;">-</span> bf b)))
+            D (<span style="color: #D8FA3C;">-</span> (pow B 2) (<span style="color: #D8FA3C;">*</span> 4 A C))]
+        (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">-</span> B) (sqrt D))
+           2 A)))
+
+     <span style="color: #4c83ff;">:Zr</span>
+     (fnk
+      [x-el h ar-red]
+      (<span style="color: #D8FA3C;">-</span> h x-el ar-red))
+
+     <span style="color: #4c83ff;">:I-red-el</span>
+     (fnk
+      [Ar-red Arc-red n' b h hf bf x-el ar-red arc-red]
+      (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> 1/3 b (pow x-el 3))
+         (<span style="color: #D8FA3C;">*</span> 1/12 (<span style="color: #D8FA3C;">-</span> bf b) (pow hf 3))
+         (<span style="color: #D8FA3C;">*</span> hf (<span style="color: #D8FA3C;">-</span> bf b) (pow (<span style="color: #D8FA3C;">-</span> x-el (<span style="color: #D8FA3C;">*</span> 0.5 hf)) 2))
+         (<span style="color: #D8FA3C;">*</span> n'
+            (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> Arc-red (pow (<span style="color: #D8FA3C;">-</span> x-el arc-red)  2))
+               (<span style="color: #D8FA3C;">*</span> Ar-red  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar-red) 2))))))
+     })))
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+</div>
+
+
 <div id="outline-container-sec-1-3" class="outline-3">
 <h3 id="sec-1-3"><span class="section-number-3">1.3</span> Код модуля</h3>
 <div class="outline-text-3" id="text-1-3">
@@ -1455,6 +1658,34 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
      (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Nr</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>))
         (<span style="color: #D8FA3C;">-</span> h0 arc)))
     }))
+(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-bending-flow</span>
+  (<span style="color: #D8FA3C;">merge</span> rect-bending-flow
+         (flow
+          {
+            <span style="color: #4c83ff;">:M-max</span>
+           (fnk
+            <span style="color: #61CE3C;">""</span>
+            [<span style="color: #919191;">Rc</span> b x bf hf h0 h01 <span style="color: #919191;">Nrc</span> arc sigma-pc <span style="color: #919191;">Apc</span> apc]
+            (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b x
+                  (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 x)))
+               (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> (<span style="color: #D8FA3C;">-</span> bf b) hf
+                  (<span style="color: #D8FA3C;">-</span> h0 (<span style="color: #D8FA3C;">*</span> 0.5 hf)))
+               (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Nrc</span>
+                  (<span style="color: #D8FA3C;">-</span> h01 arc))
+               (<span style="color: #D8FA3C;">*</span> sigma-pc <span style="color: #919191;">Apc</span>
+                  (<span style="color: #D8FA3C;">-</span> h0 apc))))
+
+           <span style="color: #4c83ff;">:x</span>
+           (fnk
+            <span style="color: #61CE3C;">""</span>
+            [<span style="color: #919191;">Rc</span> b bf hf <span style="color: #919191;">Ap</span> <span style="color: #919191;">Apc</span> <span style="color: #919191;">Rp</span> sigma-pc <span style="color: #919191;">Nr</span> <span style="color: #919191;">Nrc</span>]
+            (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>)
+                  <span style="color: #919191;">Nr</span>
+                  (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Nrc</span>)
+                  (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>)
+                  (<span style="color: #D8FA3C;">*</span> -1 <span style="color: #919191;">Rc</span> hf (<span style="color: #D8FA3C;">-</span> bf b)))
+               (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
+           })))
 (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-crack-width-flow</span>
   (<span style="color: #D8FA3C;">merge</span>
    (flow
@@ -1591,6 +1822,40 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
          x-el))
      })
    (<span style="color: #D8FA3C;">select-keys</span> rect-bending-flow [<span style="color: #4c83ff;">:Ar</span> <span style="color: #4c83ff;">:Arc</span>])))
+(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-crack-width-flow</span>
+  (<span style="color: #D8FA3C;">merge</span>
+   rect-crack-width-flow
+   (flow
+    {
+     <span style="color: #4c83ff;">:x-el</span>
+     (fnk
+      [n' b h bf hf Ar-red Arc-red ar-red arc-red]
+      (<span style="color: #FF6400;">let</span> [A (<span style="color: #D8FA3C;">*</span> 1/2 b)
+            B (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">+</span> Ar-red Arc-red))
+                 (<span style="color: #D8FA3C;">*</span> hf (<span style="color: #D8FA3C;">-</span> bf b)))
+            C (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> n' (<span style="color: #D8FA3C;">-</span> (<span style="color: #D8FA3C;">*</span> Ar-red ar-red)
+                          (<span style="color: #D8FA3C;">*</span> Ar-red h)
+                          (<span style="color: #D8FA3C;">*</span> Arc-red arc-red)))
+                 (<span style="color: #D8FA3C;">*</span> -1/2 hf hf (<span style="color: #D8FA3C;">-</span> bf b)))
+            D (<span style="color: #D8FA3C;">-</span> (pow B 2) (<span style="color: #D8FA3C;">*</span> 4 A C))]
+        (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">-</span> B) (sqrt D))
+           2 A)))
+
+     <span style="color: #4c83ff;">:Zr</span>
+     (fnk
+      [x-el h ar-red]
+      (<span style="color: #D8FA3C;">-</span> h x-el ar-red))
+
+     <span style="color: #4c83ff;">:I-red-el</span>
+     (fnk
+      [Ar-red Arc-red n' b h hf bf x-el ar-red arc-red]
+      (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> 1/3 b (pow x-el 3))
+         (<span style="color: #D8FA3C;">*</span> 1/12 (<span style="color: #D8FA3C;">-</span> bf b) (pow hf 3))
+         (<span style="color: #D8FA3C;">*</span> hf (<span style="color: #D8FA3C;">-</span> bf b) (pow (<span style="color: #D8FA3C;">-</span> x-el (<span style="color: #D8FA3C;">*</span> 0.5 hf)) 2))
+         (<span style="color: #D8FA3C;">*</span> n'
+            (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> Arc-red (pow (<span style="color: #D8FA3C;">-</span> x-el arc-red)  2))
+               (<span style="color: #D8FA3C;">*</span> Ar-red  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar-red) 2))))))
+     })))
 </pre>
 </div>
 </div>
@@ -1608,8 +1873,9 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
 
 <div class="org-src-container">
 
-<pre class="src src-clojure">(<span style="color: #FF6400;">let</span> [lazy-rect (lazy-compile rect-bending-flow)
-      lazy-xi   (lazy-compile xi-flow)]
+<pre class="src src-clojure">(<span style="color: #FF6400;">let</span> [lazy-rect (lazy-compile (<span style="color: #D8FA3C;">merge</span> xi-flow rect-bending-flow))
+      lazy-T    (lazy-compile (<span style="color: #D8FA3C;">merge</span> xi-flow T-bending-flow))]
+
   (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending</span>
     (fnk
      {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h reinf] <span style="color: #4c83ff;">:as</span> args}
@@ -1620,14 +1886,80 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
                          <span style="color: #4c83ff;">:sigma-p</span> (si/<span style="color: #919191;">MPa</span> 0)}
                         args)
            no-<span style="color: #919191;">Arc</span>  (lazy-rect (<span style="color: #D8FA3C;">update-in</span> input [<span style="color: #4c83ff;">:reinf</span> <span style="color: #4c83ff;">:top</span>]
-                                         (<span style="color: #FBDE2D;">fn</span> [t]
-                                           (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
+                                         (<span style="color: #FBDE2D;">fn</span> [t] (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
            all-<span style="color: #919191;">Arc</span> (lazy-rect input)
-           arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)] (lazy-xi (<span style="color: #FF6400;">cond</span>
-                 (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-                 (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-                 <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
-                              <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc))))))))
+           arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)]
+       (<span style="color: #FF6400;">cond</span>
+        (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+        (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+        <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
+                <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc))))))
+
+  (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-bending</span>
+    (fnk
+     {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h bf hf reinf] <span style="color: #4c83ff;">:as</span> args}
+     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Ap</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:Apc</span> ((pow si/m 2) 0)
+                         <span style="color: #4c83ff;">:Rp</span>  (si/<span style="color: #919191;">MPa</span> 0) <span style="color: #4c83ff;">:Rpc</span> (si/<span style="color: #919191;">MPa</span> 500)
+                         <span style="color: #4c83ff;">:ap</span> (si/m 0) <span style="color: #4c83ff;">:apc</span> (si/m 0)
+                         <span style="color: #4c83ff;">:sigma-pc1</span> (si/<span style="color: #919191;">MPa</span> 0)
+                         <span style="color: #4c83ff;">:sigma-p</span> (si/<span style="color: #919191;">MPa</span> 0)}
+                        args)
+           no-<span style="color: #919191;">Arc</span>  (lazy-T (<span style="color: #D8FA3C;">update-in</span> input [<span style="color: #4c83ff;">:reinf</span> <span style="color: #4c83ff;">:top</span>]
+                                         (<span style="color: #FBDE2D;">fn</span> [t] (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
+           all-<span style="color: #919191;">Arc</span> (lazy-T input)
+           arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)]
+       (<span style="color: #FF6400;">cond</span>
+        (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+        (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+        <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
+                <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc))))))
+
+  (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">bending</span>
+    (fnk
+     {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h reinf] <span style="color: #4c83ff;">:as</span> args}
+     (<span style="color: #FF6400;">if</span> (<span style="color: #FF6400;">and</span> (<span style="color: #4c83ff;">:hf</span> args)
+              (<span style="color: #4c83ff;">:bf</span> args))
+       (<span style="color: #FF6400;">let</span> [as-rect (rect-bending (<span style="color: #D8FA3C;">assoc</span> args <span style="color: #4c83ff;">:b</span> (<span style="color: #4c83ff;">:bf</span> args)))
+             as-T    (T-bending    args)]
+         (<span style="color: #FF6400;">if</span> (<span style="color: #D8FA3C;">&lt;=</span> (<span style="color: #4c83ff;">:x</span> as-rect) (<span style="color: #4c83ff;">:hf</span> args))
+           (<span style="color: #D8FA3C;">assoc</span> as-rect <span style="color: #4c83ff;">:as</span> <span style="color: #61CE3C;">"[]"</span>)
+           (<span style="color: #D8FA3C;">assoc</span> as-T <span style="color: #4c83ff;">:as</span> <span style="color: #61CE3C;">"T"</span>)))
+       (<span style="color: #D8FA3C;">assoc</span> (rect-bending args) <span style="color: #4c83ff;">:as</span> <span style="color: #61CE3C;">"[]"</span>)))))
+</pre>
+</div>
+</div>
+</li>
+<li>Ширина раскрытия трещин<br/><div class="outline-text-5" id="text-1-3-3-2">
+<p>
+Проверка ширины раскрытия трещин, определение предельно допустимых моментов.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #FF6400;">let</span> [lazy-rect-cracking (lazy-compile rect-crack-width-flow)
+      lazy-T-cracking    (lazy-compile T-crack-width-flow)]
+
+  (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-cracking</span>
+    (fnk
+     {<span style="color: #4c83ff;">:keys</span> [h b reinf <span style="color: #919191;">Er</span> Rc-mc2] <span style="color: #4c83ff;">:as</span> args}
+     (lazy-rect-cracking args)))
+
+  (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-cracking</span>
+    (fnk
+     {<span style="color: #4c83ff;">:keys</span> [h b hf bf reinf <span style="color: #919191;">Er</span> Rc-mc2] <span style="color: #4c83ff;">:as</span> args}
+     (lazy-T-cracking args)))
+
+  (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">cracking</span>
+    (fnk
+     {<span style="color: #4c83ff;">:keys</span> [h b reinf <span style="color: #919191;">Er</span> Rc-mc2] <span style="color: #4c83ff;">:as</span> args}
+     (<span style="color: #FF6400;">if</span> (<span style="color: #FF6400;">and</span> (<span style="color: #4c83ff;">:hf</span> args)
+              (<span style="color: #4c83ff;">:bf</span> args))
+       (<span style="color: #FF6400;">let</span> [as-rect (rect-cracking (<span style="color: #D8FA3C;">assoc</span> args <span style="color: #4c83ff;">:b</span> (<span style="color: #4c83ff;">:bf</span> args)))
+             as-T    (T-cracking    args)]
+         (<span style="color: #FF6400;">if</span> (<span style="color: #D8FA3C;">&lt;=</span> (<span style="color: #4c83ff;">:x-el</span> as-T) (<span style="color: #4c83ff;">:hf</span> args))
+           (<span style="color: #D8FA3C;">assoc</span> as-rect <span style="color: #4c83ff;">:as</span> <span style="color: #61CE3C;">"[]"</span>)
+           (<span style="color: #D8FA3C;">assoc</span> as-T <span style="color: #4c83ff;">:as</span> <span style="color: #61CE3C;">"T"</span>)))
+       (<span style="color: #D8FA3C;">assoc</span> (rect-cracking args) <span style="color: #4c83ff;">:as</span> <span style="color: #61CE3C;">"[]"</span>)))))
 </pre>
 </div>
 </div>
@@ -1637,7 +1969,7 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2014-01-21 �� 15:24</p>
+<p class="date">Created: 2014-01-22 �� 13:47</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.0)</p>
 <p class="xhtml-validation"><a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a></p>
 </div>

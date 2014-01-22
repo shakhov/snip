@@ -25,17 +25,24 @@
 
 (defn test-I
   [& cs]
-  (let [res (mapv #(rect-bending %)
-                  (interleave cs (map flip-cs cs)))]
+  (let [res (mapv bending cs)]
     (println "Расчет на прочность:")
     (println (vtable {:table {:width 64}
-                      :cols (vec (for [i (range (count res))]
-                                   {:title (str (inc (int (/ i 2)))
-                                                (if (even? i)
-                                                  ". M>0"
-                                                  ". M<0"))
-                                    :key #(nth % (inc i))}))
-                      :rows [{:title "Рабочая высота - h0, cм"
+                      :rows [{:title "Тип сечения (расч.)"
+                              :key :as}
+                             {:title "Высота - h, cм"
+                              :key :h
+                              :format (format-units si/cm "%.1f")}
+                             {:title "Ширина ребра - b, cм"
+                              :key :b
+                              :format (format-units si/cm "%.1f")}
+                             {:title "Толщина плиты - hf, cм"
+                              :key :hf
+                              :format (format-units si/cm "%.1f")}
+                             {:title "Ширина плиты - bf, cм"
+                              :key :bf
+                              :format (format-units si/cm "%.1f")}
+                             {:title "Рабочая высота - h0, cм"
                               :key :h0
                               :format (format-units si/cm "%.1f")}
                              {:title "Высота сжатой зоны - x, см"
@@ -66,24 +73,18 @@
 
 (defn test-II
   [& cs]
-  (let [rect-cracking (lazy-compile rect-crack-width-flow)
-        res (mapv #(rect-cracking %)
-                  (interleave cs (map flip-cs cs)))]
+  (let [res (mapv cracking cs)]
     (println "Расчет на раскрытие трещин:")
     (println (vtable {:table {:width 64}
-                      :cols (vec (for [i (range (count res))]
-                                   {:title (str (inc (int (/ i 2)))
-                                                (if (even? i)
-                                                  ". M>0"
-                                                  ". M<0"))
-                                    :key #(nth % (inc i))}))
-                      :rows [{:title "Высота сжатой зоны - x, см"
+                      :rows [{:title "Тип сечения (расч.)"
+                              :key :as}
+                             {:title "Высота сжатой зоны - x, см"
                               :key :x-el
                               :format (format-units si/cm "%.2f")}
                              {:title "Растянутая арматура - As-red, см2"
                               :key :Ar-red
                               :format (format-units (pow si/cm 2) "%.2f")}
-                             {:title "Сжатая арматура Asc-red, см2"
+                             {:title "Сжатая арматура - Asc-red, см2"
                               :key :Arc-red
                               :format (format-units (pow si/cm 2) "%.2f")}
                              {:title "Коэффициент n'"
@@ -119,3 +120,20 @@
   (apply test-I cs)
   (println)
   (apply test-II cs))
+
+(comment
+  (merge {:h (si/cm 76)
+          :b (si/cm 156)
+          :reinf {:bottom [{:rebar rebar/AIII
+                            :ar (si/mm 70)
+                            :d (si/mm 18)
+                            :n 10
+                            :beta-cr 1.0}]
+                  :top [{:rebar rebar/AIII
+                         :ar (si/mm 70)
+                         :d (si/mm 20)
+                         :n 10
+                         :beta-cr 1.0}]}}
+         rebar/AIII concrete/B30
+
+         {:delta-cr (si/cm 0.02)}))

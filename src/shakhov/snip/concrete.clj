@@ -179,6 +179,34 @@
      (* (+ Nr (* Rp Ap))
         (- h0 arc)))
     }))
+(def T-bending-flow
+  (merge rect-bending-flow
+         (flow
+          {
+            :M-max
+           (fnk
+            ""
+            [Rc b x bf hf h0 h01 Nrc arc sigma-pc Apc apc]
+            (+ (* Rc b x
+                  (- h0 (* 0.5 x)))
+               (* Rc (- bf b) hf
+                  (- h0 (* 0.5 hf)))
+               (* Nrc
+                  (- h01 arc))
+               (* sigma-pc Apc
+                  (- h0 apc))))
+           
+           :x
+           (fnk
+            ""
+            [Rc b bf hf Ap Apc Rp sigma-pc Nr Nrc]
+            (/ (+ (* Rp Ap)
+                  Nr
+                  (* -1 Nrc)
+                  (* -1 sigma-pc Apc)
+                  (* -1 Rc hf (- bf b)))
+               (* Rc b)))
+           })))
 (def rect-crack-width-flow
   (merge
    (flow
@@ -315,9 +343,44 @@
          x-el))
      })
    (select-keys rect-bending-flow [:Ar :Arc])))
+(def T-crack-width-flow
+  (merge
+   rect-crack-width-flow
+   (flow
+    {
+     :x-el
+     (fnk
+      [n' b h bf hf Ar-red Arc-red ar-red arc-red]
+      (let [A (* 1/2 b)
+            B (+ (* n' (+ Ar-red Arc-red))
+                 (* hf (- bf b)))
+            C (+ (* n' (- (* Ar-red ar-red)
+                          (* Ar-red h)
+                          (* Arc-red arc-red)))
+                 (* -1/2 hf hf (- bf b)))
+            D (- (pow B 2) (* 4 A C))]
+        (/ (+ (- B) (sqrt D))
+           2 A)))
+     
+     :Zr
+     (fnk
+      [x-el h ar-red]
+      (- h x-el ar-red))
+     
+     :I-red-el
+     (fnk
+      [Ar-red Arc-red n' b h hf bf x-el ar-red arc-red]
+      (+ (* 1/3 b (pow x-el 3))
+         (* 1/12 (- bf b) (pow hf 3))
+         (* hf (- bf b) (pow (- x-el (* 0.5 hf)) 2))
+         (* n'
+            (+ (* Arc-red (pow (- x-el arc-red)  2))
+               (* Ar-red  (pow (- h x-el ar-red) 2))))))
+     })))
 
-(let [lazy-rect (lazy-compile rect-bending-flow)
-      lazy-xi   (lazy-compile xi-flow)]
+(let [lazy-rect (lazy-compile (merge xi-flow rect-bending-flow))
+      lazy-T    (lazy-compile (merge xi-flow T-bending-flow))]
+
   (def rect-bending
     (fnk
      {:keys [Rc b h reinf] :as args}
@@ -328,11 +391,67 @@
                          :sigma-p (si/MPa 0)}
                         args)
            no-Arc  (lazy-rect (update-in input [:reinf :top]
-                                         (fn [t]
-                                           (mapv #(assoc % :n 0) t))))
+                                         (fn [t] (mapv #(assoc % :n 0) t))))
            all-Arc (lazy-rect input)
-           arc (:arc all-Arc)] (lazy-xi (cond
-                 (<  (:x no-Arc) (* 2 arc)) (dissoc  no-Arc :M-max-sc)
-                 (>= (:x all-Arc)(* 2 arc)) (dissoc all-Arc :M-max-sc)
-                 :else (assoc (dissoc all-Arc :M-max)
-                              :x (* 2 arc))))))))
+           arc (:arc all-Arc)]
+       (cond
+        (<  (:x no-Arc) (* 2 arc)) (dissoc  no-Arc :M-max-sc)
+        (>= (:x all-Arc)(* 2 arc)) (dissoc all-Arc :M-max-sc)
+        :else (assoc (dissoc all-Arc :M-max)
+                :x (* 2 arc))))))
+
+  (def T-bending
+    (fnk
+     {:keys [Rc b h bf hf reinf] :as args}
+     (let [input (merge {:Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
+                         :Rp  (si/MPa 0) :Rpc (si/MPa 500)
+                         :ap (si/m 0) :apc (si/m 0)
+                         :sigma-pc1 (si/MPa 0)
+                         :sigma-p (si/MPa 0)}
+                        args)
+           no-Arc  (lazy-T (update-in input [:reinf :top]
+                                         (fn [t] (mapv #(assoc % :n 0) t))))
+           all-Arc (lazy-T input)
+           arc (:arc all-Arc)]
+       (cond
+        (<  (:x no-Arc) (* 2 arc)) (dissoc  no-Arc :M-max-sc)
+        (>= (:x all-Arc)(* 2 arc)) (dissoc all-Arc :M-max-sc)
+        :else (assoc (dissoc all-Arc :M-max)
+                :x (* 2 arc))))))
+
+  (def bending
+    (fnk
+     {:keys [Rc b h reinf] :as args}
+     (if (and (:hf args)
+              (:bf args))
+       (let [as-rect (rect-bending (assoc args :b (:bf args)))
+             as-T    (T-bending    args)]
+         (if (<= (:x as-rect) (:hf args))
+           (assoc as-rect :as "[]")
+           (assoc as-T :as "T")))
+       (assoc (rect-bending args) :as "[]")))))
+
+(let [lazy-rect-cracking (lazy-compile rect-crack-width-flow)
+      lazy-T-cracking    (lazy-compile T-crack-width-flow)]
+
+  (def rect-cracking
+    (fnk
+     {:keys [h b reinf Er Rc-mc2] :as args}
+     (lazy-rect-cracking args)))
+
+  (def T-cracking
+    (fnk
+     {:keys [h b hf bf reinf Er Rc-mc2] :as args}
+     (lazy-T-cracking args)))
+
+  (def cracking
+    (fnk
+     {:keys [h b reinf Er Rc-mc2] :as args}
+     (if (and (:hf args)
+              (:bf args))
+       (let [as-rect (rect-cracking (assoc args :b (:bf args)))
+             as-T    (T-cracking    args)]
+         (if (<= (:x-el as-T) (:hf args))
+           (assoc as-rect :as "[]")
+           (assoc as-T :as "T")))
+       (assoc (rect-cracking args) :as "[]")))))
