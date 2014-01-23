@@ -81,59 +81,69 @@
            (* -1 sigma-pc Apc))
         (* Rc b)))
     
-    :Ari
+    :bottom-rebar
     (fnk
      [reinf]
+     (:bottom reinf))
+    
+    :Ari
+    (fnk
+     [bottom-rebar]
      (map (fn [{:keys [n d rebar]}]
             (* n ((:A rebar) d)))
-          (:bottom reinf)))
+          bottom-rebar))
     
     :Rri
     (fnk
-     [reinf]
-     (map #(get-in % [:rebar :Rr]) (:bottom reinf)))
+     [bottom-rebar]
+     (map #(get-in % [:rebar :Rr]) bottom-rebar))
     
     :ari
     (fnk
-     [reinf]
-     (map :ar (:bottom reinf)))
+     [bottom-rebar]
+     (map :ar bottom-rebar))
     
     :Ar
     (fnk
      [Ari]
-     (apply + Ari))
+     (apply + ((pow si/cm 2) 0) Ari))
+    
+    :top-rebar
+    (fnk
+     [reinf]
+     (:top reinf))
     
     :Arci
     (fnk
-     [reinf]
+     [top-rebar]
      (map (fn [{:keys [n d rebar]}]
             (* n ((:A rebar) d)))
-          (:top reinf)))
+          top-rebar))
     
     :Rrci
     (fnk
-     [reinf]
-     (map #(get-in % [:rebar :Rr]) (:top reinf)))
+     [top-rebar]
+     (map #(get-in % [:rebar :Rr]) top-rebar))
     
     :arci
     (fnk
-     [reinf]
-     (map :ar (:top reinf)))
+     [top-rebar]
+     (map :ar top-rebar))
     
     :Arc
     (fnk
      [Arci]
-     (apply + Arci))
+     (apply + ((pow si/cm 2) 0) Arci))
     
     :Nr
     (fnk
      [Ari Rri]
-     (apply + (map * Ari Rri)))
+     (apply + (si/N 0) (map * Ari Rri)))
     
     :Nrc
     (fnk
       [Arci Rrci]
-      (apply + (map * Arci Rrci)))
+      (apply + (si/N 0) (map * Arci Rrci)))
     
     :ar
     (fnk
@@ -178,6 +188,19 @@
      [Rp Ap Nr h0 arc]
      (* (+ Nr (* Rp Ap))
         (- h0 arc)))
+    
+    :Ap  (fnk [] ((pow si/m 2) 0))
+    :Apc (fnk [] ((pow si/m 2) 0))
+    
+    :Rp (fnk [] (si/MPa 0))
+    :Rpc (fnk [] (si/MPa 500))
+    
+    :ap (fnk [] (si/m 0))
+    :apc (fnk [] (si/m 0))
+    
+    :sigma-pc1 (fnk [] (si/MPa 0))
+    :sigma-p (fnk [] (si/MPa 0))
+    
     }))
 (def T-bending-flow
   (merge rect-bending-flow
@@ -229,11 +252,10 @@
      
      :R-cr
      (fnk
-      [A-cr reinf]
-      (let [r (:bottom reinf)
-            d (map :d r)
-            n (map :n r)
-            beta-cr (map :beta-cr r)]
+      [A-cr bottom-rebar]
+      (let [d (map :d bottom-rebar)
+            n (map :n bottom-rebar)
+            beta-cr (map :beta-cr bottom-rebar)]
         (/ A-cr
            (apply + (map * beta-cr d n)))))
      
@@ -249,16 +271,17 @@
            (+ ar-cr (* 6 d-cr))))
      
      [ar-cr d-cr]
-     (fnk
-      [reinf]
-      (let [rb (:bottom reinf)
-            rb (map (fn [{:keys [rebar n d] :as row}]
-                      (assoc row :Ar (* n ((:A rebar) d))))
-                    rb)
-            Ar-max (apply max (map :Ar rb))]
-        (map (apply max-key :ar (filter #(>= (:Ar %) (* 0.5 Ar-max))
-                                        rb))
-             [:ar :d])))
+          (fnk
+           [bottom-rebar]
+           (let [rb bottom-rebar
+                 rb (map (fn [{:keys [rebar n d] :as row}]
+                           (assoc row :Ar (* n ((:A rebar) d))))
+                         rb)
+                 Ar-max (apply max (map :Ar rb))]
+             (map (reduce #(if (> (:ar %1) (:ar %2)) %1 %2)
+                          (filter #(>= (:Ar %) (* 0.5 Ar-max))
+                                  rb))
+                  [:ar :d])))
      
      :sigma-r
      (fnk
@@ -291,45 +314,56 @@
             (+ (* Arc-red (pow (- x-el arc-red)  2))
                (* Ar-red  (pow (- h x-el ar-red) 2))))))
      
+     [top-rebar bottom-rebar]
+     (fnk
+      [reinf]
+      (map reinf [:top :bottom]))
+     
      :Ar-red
      (fnk
-      [reinf Er]
-      (apply + (map (fn [{:keys [n d rebar]}]
-                      (* n ((:A rebar) d)
-                         (/ (:Er rebar)
-                            Er)))
-                    (:bottom reinf))))
+      [bottom-rebar Er]
+      (apply + ((pow si/cm 2) 0)
+             (map (fn [{:keys [n d rebar]}]
+                    (* n ((:A rebar) d)
+                       (/ (:Er rebar)
+                          Er)))
+                  bottom-rebar)))
      
      :Arc-red
      (fnk
-      [reinf Er]
-      (apply + (map (fn [{:keys [n d rebar]}]
-                      (* n ((:A rebar) d)
-                         (/ (:Er rebar)
-                            Er)))
-                    (:top reinf))))
+      [top-rebar Er]
+      (apply + ((pow si/cm 2) 0)
+             (map (fn [{:keys [n d rebar]}]
+                    (* n ((:A rebar) d)
+                       (/ (:Er rebar)
+                          Er)))
+                  top-rebar)))
      
      :ar-red
      (fnk
-      [reinf Ar-red Er]
-      (/ (apply + (map (fn [{:keys [n d rebar ar]}]
-                         (* ar
-                            n ((:A rebar) d)
-                            (/ (:Er rebar)
-                               Er)))
-                       (:bottom reinf)))
+      [bottom-rebar Ar-red Er]
+      (/ (apply + (pow (si/cm 0) 3)
+              (map (fn [{:keys [n d rebar ar]}]
+                     (* ar
+                        n ((:A rebar) d)
+                        (/ (:Er rebar)
+                           Er)))
+                   bottom-rebar))
          Ar-red))
      
      :arc-red
      (fnk
-      [reinf Arc-red Er]
-      (/ (apply + (map (fn [{:keys [n d rebar ar]}]
+      [top-rebar Arc-red Er]
+      (if (zero? Arc-red)
+        (si/m 0)
+        (/ (apply + (pow (si/cm 0) 3)
+                  (map (fn [{:keys [n d rebar ar]}]
                          (* ar
                             n ((:A rebar) d)
                             (/ (:Er rebar)
                                Er)))
-                       (:top reinf)))
-         Arc-red))
+                       top-rebar))
+           Arc-red)))
      
      :sigma-c
      (fnk
@@ -381,43 +415,27 @@
 (let [lazy-rect (lazy-compile (merge xi-flow rect-bending-flow))
       lazy-T    (lazy-compile (merge xi-flow T-bending-flow))]
 
+  (defn cs-bending
+    [flow input]
+    (let [no-Arc  (flow (update-in input [:reinf :top]
+                                   (fn [t] (mapv #(assoc % :n 0) t))))
+          all-Arc (flow input)
+          arc (:arc all-Arc)]
+      (cond
+       (<  (:x no-Arc) (* 2 arc)) (dissoc  no-Arc :M-max-sc)
+       (>= (:x all-Arc)(* 2 arc)) (dissoc all-Arc :M-max-sc)
+       :else (assoc (dissoc all-Arc :M-max)
+               :x (* 2 arc)))))
+
   (def rect-bending
     (fnk
      {:keys [Rc b h reinf] :as args}
-     (let [input (merge {:Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
-                         :Rp  (si/MPa 0) :Rpc (si/MPa 500)
-                         :ap (si/m 0) :apc (si/m 0)
-                         :sigma-pc1 (si/MPa 0)
-                         :sigma-p (si/MPa 0)}
-                        args)
-           no-Arc  (lazy-rect (update-in input [:reinf :top]
-                                         (fn [t] (mapv #(assoc % :n 0) t))))
-           all-Arc (lazy-rect input)
-           arc (:arc all-Arc)]
-       (cond
-        (<  (:x no-Arc) (* 2 arc)) (dissoc  no-Arc :M-max-sc)
-        (>= (:x all-Arc)(* 2 arc)) (dissoc all-Arc :M-max-sc)
-        :else (assoc (dissoc all-Arc :M-max)
-                :x (* 2 arc))))))
+     (cs-bending lazy-rect args)))
 
   (def T-bending
     (fnk
      {:keys [Rc b h bf hf reinf] :as args}
-     (let [input (merge {:Ap ((pow si/m 2) 0) :Apc ((pow si/m 2) 0)
-                         :Rp  (si/MPa 0) :Rpc (si/MPa 500)
-                         :ap (si/m 0) :apc (si/m 0)
-                         :sigma-pc1 (si/MPa 0)
-                         :sigma-p (si/MPa 0)}
-                        args)
-           no-Arc  (lazy-T (update-in input [:reinf :top]
-                                         (fn [t] (mapv #(assoc % :n 0) t))))
-           all-Arc (lazy-T input)
-           arc (:arc all-Arc)]
-       (cond
-        (<  (:x no-Arc) (* 2 arc)) (dissoc  no-Arc :M-max-sc)
-        (>= (:x all-Arc)(* 2 arc)) (dissoc all-Arc :M-max-sc)
-        :else (assoc (dissoc all-Arc :M-max)
-                :x (* 2 arc))))))
+     (cs-bending lazy-T args)))
 
   (def bending
     (fnk

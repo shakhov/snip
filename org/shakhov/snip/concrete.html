@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>concrete</title>
-<!-- 2014-01-22 �� 13:47 -->
+<!-- 2014-01-23 �� 14:12 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="generator" content="Org-mode"/>
 <style type="text/css">
@@ -412,27 +412,32 @@ x = \frac{R_p A_p + N_r - N_{rc} - \sigma_{pc} A_{pc}} {R_c b}
 
 <div class="org-src-container">
 
-<pre class="src src-clojure"><span style="color: #4c83ff;">:Ari</span>
+<pre class="src src-clojure"><span style="color: #4c83ff;">:bottom-rebar</span>
 (fnk
  [reinf]
+ (<span style="color: #4c83ff;">:bottom</span> reinf))
+
+<span style="color: #4c83ff;">:Ari</span>
+(fnk
+ [bottom-rebar]
  (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
         (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-      (<span style="color: #4c83ff;">:bottom</span> reinf)))
+      bottom-rebar))
 
 <span style="color: #4c83ff;">:Rri</span>
 (fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
+ [bottom-rebar]
+ (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) bottom-rebar))
 
 <span style="color: #4c83ff;">:ari</span>
 (fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
+ [bottom-rebar]
+ (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> bottom-rebar))
 
 <span style="color: #4c83ff;">:Ar</span>
 (fnk
  [<span style="color: #919191;">Ari</span>]
- (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
+ (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0) <span style="color: #919191;">Ari</span>))
 </pre>
 </div>
 </div>
@@ -444,27 +449,32 @@ x = \frac{R_p A_p + N_r - N_{rc} - \sigma_{pc} A_{pc}} {R_c b}
 
 <div class="org-src-container">
 
-<pre class="src src-clojure"><span style="color: #4c83ff;">:Arci</span>
+<pre class="src src-clojure"><span style="color: #4c83ff;">:top-rebar</span>
 (fnk
  [reinf]
+ (<span style="color: #4c83ff;">:top</span> reinf))
+
+<span style="color: #4c83ff;">:Arci</span>
+(fnk
+ [top-rebar]
  (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
         (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-      (<span style="color: #4c83ff;">:top</span> reinf)))
+      top-rebar))
 
 <span style="color: #4c83ff;">:Rrci</span>
 (fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:top</span> reinf)))
+ [top-rebar]
+ (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) top-rebar))
 
 <span style="color: #4c83ff;">:arci</span>
 (fnk
- [reinf]
- (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:top</span> reinf)))
+ [top-rebar]
+ (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> top-rebar))
 
 <span style="color: #4c83ff;">:Arc</span>
 (fnk
  [<span style="color: #919191;">Arci</span>]
- (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Arci</span>))
+ (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0) <span style="color: #919191;">Arci</span>))
 </pre>
 </div>
 </div>
@@ -482,7 +492,7 @@ N_r = \sum\limits_i A_{r,i} R_{r,i}
 <pre class="src src-clojure"><span style="color: #4c83ff;">:Nr</span>
 (fnk
  [<span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>]
- (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
+ (<span style="color: #D8FA3C;">apply</span> + (si/N 0) (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
 </pre>
 </div>
 </div>
@@ -500,12 +510,11 @@ N_{rc} = \sum\limits_i A_{rc,i} R_{rc,i}
 <pre class="src src-clojure"><span style="color: #4c83ff;">:Nrc</span>
 (fnk
   [<span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>]
-  (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>)))
+  (<span style="color: #D8FA3C;">apply</span> + (si/N 0) (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>)))
 </pre>
 </div>
 </div>
 </li>
-
 <li>Центр тяжести сжатой и растянутой арматуры<br/><div class="outline-text-5" id="text-1-1-2-7">
 <p>
 \(a_r\) &#x2014; расстояние от растянутой грани бетона до центра тяжести
@@ -544,7 +553,6 @@ a_{rc} = \cfrac{\sum_i A_{rc,i} R_{rc,i} a_{rc,i}} {N_{rc}}
 </div>
 </div>
 </li>
-
 <li>\(h_0\), \(h_{01}\) &#x2014; рабочая высота сечения<br/><div class="outline-text-5" id="text-1-1-2-8">
 <p>
 Рабочая высота для ненапрягаемой сжатой арматуры равна \(h_{01} = h - a_r\).
@@ -637,7 +645,28 @@ M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
 </div>
 </div>
 </li>
-<li>Код потока<br/><div class="outline-text-5" id="text-1-1-2-11">
+<li>Параметры по умолчанию<br/><div class="outline-text-5" id="text-1-1-2-11">
+<p>
+По умолчанию считается, что напрягаемая арматура отсутствует:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-clojure"><span style="color: #4c83ff;">:Ap</span>  (fnk [] ((pow si/m 2) 0))
+<span style="color: #4c83ff;">:Apc</span> (fnk [] ((pow si/m 2) 0))
+
+<span style="color: #4c83ff;">:Rp</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+<span style="color: #4c83ff;">:Rpc</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 500))
+
+<span style="color: #4c83ff;">:ap</span> (fnk [] (si/m 0))
+<span style="color: #4c83ff;">:apc</span> (fnk [] (si/m 0))
+
+<span style="color: #4c83ff;">:sigma-pc1</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+<span style="color: #4c83ff;">:sigma-p</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+</pre>
+</div>
+</div>
+</li>
+<li>Код потока<br/><div class="outline-text-5" id="text-1-1-2-12">
 <div class="org-src-container">
 
 <pre class="src src-clojure">(<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending-flow</span>
@@ -664,59 +693,69 @@ M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
            (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
         (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
 
-    <span style="color: #4c83ff;">:Ari</span>
+    <span style="color: #4c83ff;">:bottom-rebar</span>
     (fnk
      [reinf]
+     (<span style="color: #4c83ff;">:bottom</span> reinf))
+
+    <span style="color: #4c83ff;">:Ari</span>
+    (fnk
+     [bottom-rebar]
      (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
             (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-          (<span style="color: #4c83ff;">:bottom</span> reinf)))
+          bottom-rebar))
 
     <span style="color: #4c83ff;">:Rri</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
+     [bottom-rebar]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) bottom-rebar))
 
     <span style="color: #4c83ff;">:ari</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
+     [bottom-rebar]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> bottom-rebar))
 
     <span style="color: #4c83ff;">:Ar</span>
     (fnk
      [<span style="color: #919191;">Ari</span>]
-     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
+     (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0) <span style="color: #919191;">Ari</span>))
+
+    <span style="color: #4c83ff;">:top-rebar</span>
+    (fnk
+     [reinf]
+     (<span style="color: #4c83ff;">:top</span> reinf))
 
     <span style="color: #4c83ff;">:Arci</span>
     (fnk
-     [reinf]
+     [top-rebar]
      (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
             (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-          (<span style="color: #4c83ff;">:top</span> reinf)))
+          top-rebar))
 
     <span style="color: #4c83ff;">:Rrci</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:top</span> reinf)))
+     [top-rebar]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) top-rebar))
 
     <span style="color: #4c83ff;">:arci</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:top</span> reinf)))
+     [top-rebar]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> top-rebar))
 
     <span style="color: #4c83ff;">:Arc</span>
     (fnk
      [<span style="color: #919191;">Arci</span>]
-     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Arci</span>))
+     (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0) <span style="color: #919191;">Arci</span>))
 
     <span style="color: #4c83ff;">:Nr</span>
     (fnk
      [<span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>]
-     (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
+     (<span style="color: #D8FA3C;">apply</span> + (si/N 0) (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
 
     <span style="color: #4c83ff;">:Nrc</span>
     (fnk
       [<span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>]
-      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>)))
+      (<span style="color: #D8FA3C;">apply</span> + (si/N 0) (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>)))
 
     <span style="color: #4c83ff;">:ar</span>
     (fnk
@@ -761,6 +800,19 @@ M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
      [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Nr</span> h0 arc]
      (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Nr</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>))
         (<span style="color: #D8FA3C;">-</span> h0 arc)))
+
+    <span style="color: #4c83ff;">:Ap</span>  (fnk [] ((pow si/m 2) 0))
+    <span style="color: #4c83ff;">:Apc</span> (fnk [] ((pow si/m 2) 0))
+
+    <span style="color: #4c83ff;">:Rp</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+    <span style="color: #4c83ff;">:Rpc</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 500))
+
+    <span style="color: #4c83ff;">:ap</span> (fnk [] (si/m 0))
+    <span style="color: #4c83ff;">:apc</span> (fnk [] (si/m 0))
+
+    <span style="color: #4c83ff;">:sigma-pc1</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+    <span style="color: #4c83ff;">:sigma-p</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+
     }))
 </pre>
 </div>
@@ -966,11 +1018,10 @@ R_{cr} = \cfrac{A_{cr}}{\sum \beta n d}
 
 <pre class="src src-clojure"><span style="color: #4c83ff;">:R-cr</span>
 (fnk
- [A-cr reinf]
- (<span style="color: #FF6400;">let</span> [r (<span style="color: #4c83ff;">:bottom</span> reinf)
-       d (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:d</span> r)
-       n (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:n</span> r)
-       beta-cr (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:beta-cr</span> r)]
+ [A-cr bottom-rebar]
+ (<span style="color: #FF6400;">let</span> [d (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:d</span> bottom-rebar)
+       n (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:n</span> bottom-rebar)
+       beta-cr (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:beta-cr</span> bottom-rebar)]
    (<span style="color: #D8FA3C;">/</span> A-cr
       (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * beta-cr d n)))))
 </pre>
@@ -1016,16 +1067,17 @@ A_{cr} = b h_r = b (a_{r,cr} + 6d)
 <div class="org-src-container">
 
 <pre class="src src-clojure">[ar-cr d-cr]
-(fnk
- [reinf]
- (<span style="color: #FF6400;">let</span> [rb (<span style="color: #4c83ff;">:bottom</span> reinf)
-       rb (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [rebar n d] <span style="color: #4c83ff;">:as</span> row}]
-                 (<span style="color: #D8FA3C;">assoc</span> row <span style="color: #4c83ff;">:Ar</span> (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d))))
-               rb)
-       Ar-max (<span style="color: #D8FA3C;">apply</span> max (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:Ar</span> rb))]
-   (<span style="color: #D8FA3C;">map</span> (<span style="color: #D8FA3C;">apply</span> max-key <span style="color: #4c83ff;">:ar</span> (<span style="color: #D8FA3C;">filter</span> #(<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:Ar</span> %) (<span style="color: #D8FA3C;">*</span> 0.5 Ar-max))
-                                   rb))
-        [<span style="color: #4c83ff;">:ar</span> <span style="color: #4c83ff;">:d</span>])))
+     (fnk
+      [bottom-rebar]
+      (<span style="color: #FF6400;">let</span> [rb bottom-rebar
+            rb (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [rebar n d] <span style="color: #4c83ff;">:as</span> row}]
+                      (<span style="color: #D8FA3C;">assoc</span> row <span style="color: #4c83ff;">:Ar</span> (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d))))
+                    rb)
+            Ar-max (<span style="color: #D8FA3C;">apply</span> max (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:Ar</span> rb))]
+        (<span style="color: #D8FA3C;">map</span> (<span style="color: #D8FA3C;">reduce</span> #(<span style="color: #FF6400;">if</span> (<span style="color: #D8FA3C;">&gt;</span> (<span style="color: #4c83ff;">:ar</span> %1) (<span style="color: #4c83ff;">:ar</span> %2)) %1 %2)
+                     (<span style="color: #D8FA3C;">filter</span> #(<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:Ar</span> %) (<span style="color: #D8FA3C;">*</span> 0.5 Ar-max))
+                             rb))
+             [<span style="color: #4c83ff;">:ar</span> <span style="color: #4c83ff;">:d</span>])))
 </pre>
 </div>
 </div>
@@ -1125,45 +1177,56 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left(A_{rc,red} (x_{el} - a_{rc,red})^2
 </p>
 <div class="org-src-container">
 
-<pre class="src src-clojure"><span style="color: #4c83ff;">:Ar-red</span>
+<pre class="src src-clojure">[top-rebar bottom-rebar]
 (fnk
- [reinf <span style="color: #919191;">Er</span>]
- (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-                 (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                    (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                       <span style="color: #919191;">Er</span>)))
-               (<span style="color: #4c83ff;">:bottom</span> reinf))))
+ [reinf]
+ (<span style="color: #D8FA3C;">map</span> reinf [<span style="color: #4c83ff;">:top</span> <span style="color: #4c83ff;">:bottom</span>]))
+
+<span style="color: #4c83ff;">:Ar-red</span>
+(fnk
+ [bottom-rebar <span style="color: #919191;">Er</span>]
+ (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0)
+        (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+               (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                  (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                     <span style="color: #919191;">Er</span>)))
+             bottom-rebar)))
 
 <span style="color: #4c83ff;">:Arc-red</span>
 (fnk
- [reinf <span style="color: #919191;">Er</span>]
- (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-                 (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                    (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                       <span style="color: #919191;">Er</span>)))
-               (<span style="color: #4c83ff;">:top</span> reinf))))
+ [top-rebar <span style="color: #919191;">Er</span>]
+ (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0)
+        (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+               (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                  (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                     <span style="color: #919191;">Er</span>)))
+             top-rebar)))
 
 <span style="color: #4c83ff;">:ar-red</span>
 (fnk
- [reinf Ar-red <span style="color: #919191;">Er</span>]
- (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
-                    (<span style="color: #D8FA3C;">*</span> ar
-                       n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                       (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                          <span style="color: #919191;">Er</span>)))
-                  (<span style="color: #4c83ff;">:bottom</span> reinf)))
+ [bottom-rebar Ar-red <span style="color: #919191;">Er</span>]
+ (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (pow (si/cm 0) 3)
+         (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
+                (<span style="color: #D8FA3C;">*</span> ar
+                   n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                   (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                      <span style="color: #919191;">Er</span>)))
+              bottom-rebar))
     Ar-red))
 
 <span style="color: #4c83ff;">:arc-red</span>
 (fnk
- [reinf Arc-red <span style="color: #919191;">Er</span>]
- (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
+ [top-rebar Arc-red <span style="color: #919191;">Er</span>]
+ (<span style="color: #FF6400;">if</span> (zero? Arc-red)
+   (si/m 0)
+   (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (pow (si/cm 0) 3)
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
                     (<span style="color: #D8FA3C;">*</span> ar
                        n ((<span style="color: #4c83ff;">:A</span> rebar) d)
                        (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
                           <span style="color: #919191;">Er</span>)))
-                  (<span style="color: #4c83ff;">:top</span> reinf)))
-    Arc-red))
+                  top-rebar))
+      Arc-red)))
 </pre>
 </div>
 </div>
@@ -1229,11 +1292,10 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
 
      <span style="color: #4c83ff;">:R-cr</span>
      (fnk
-      [A-cr reinf]
-      (<span style="color: #FF6400;">let</span> [r (<span style="color: #4c83ff;">:bottom</span> reinf)
-            d (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:d</span> r)
-            n (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:n</span> r)
-            beta-cr (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:beta-cr</span> r)]
+      [A-cr bottom-rebar]
+      (<span style="color: #FF6400;">let</span> [d (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:d</span> bottom-rebar)
+            n (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:n</span> bottom-rebar)
+            beta-cr (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:beta-cr</span> bottom-rebar)]
         (<span style="color: #D8FA3C;">/</span> A-cr
            (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * beta-cr d n)))))
 
@@ -1249,16 +1311,17 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
            (<span style="color: #D8FA3C;">+</span> ar-cr (<span style="color: #D8FA3C;">*</span> 6 d-cr))))
 
      [ar-cr d-cr]
-     (fnk
-      [reinf]
-      (<span style="color: #FF6400;">let</span> [rb (<span style="color: #4c83ff;">:bottom</span> reinf)
-            rb (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [rebar n d] <span style="color: #4c83ff;">:as</span> row}]
-                      (<span style="color: #D8FA3C;">assoc</span> row <span style="color: #4c83ff;">:Ar</span> (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d))))
-                    rb)
-            Ar-max (<span style="color: #D8FA3C;">apply</span> max (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:Ar</span> rb))]
-        (<span style="color: #D8FA3C;">map</span> (<span style="color: #D8FA3C;">apply</span> max-key <span style="color: #4c83ff;">:ar</span> (<span style="color: #D8FA3C;">filter</span> #(<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:Ar</span> %) (<span style="color: #D8FA3C;">*</span> 0.5 Ar-max))
-                                        rb))
-             [<span style="color: #4c83ff;">:ar</span> <span style="color: #4c83ff;">:d</span>])))
+          (fnk
+           [bottom-rebar]
+           (<span style="color: #FF6400;">let</span> [rb bottom-rebar
+                 rb (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [rebar n d] <span style="color: #4c83ff;">:as</span> row}]
+                           (<span style="color: #D8FA3C;">assoc</span> row <span style="color: #4c83ff;">:Ar</span> (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d))))
+                         rb)
+                 Ar-max (<span style="color: #D8FA3C;">apply</span> max (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:Ar</span> rb))]
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #D8FA3C;">reduce</span> #(<span style="color: #FF6400;">if</span> (<span style="color: #D8FA3C;">&gt;</span> (<span style="color: #4c83ff;">:ar</span> %1) (<span style="color: #4c83ff;">:ar</span> %2)) %1 %2)
+                          (<span style="color: #D8FA3C;">filter</span> #(<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:Ar</span> %) (<span style="color: #D8FA3C;">*</span> 0.5 Ar-max))
+                                  rb))
+                  [<span style="color: #4c83ff;">:ar</span> <span style="color: #4c83ff;">:d</span>])))
 
      <span style="color: #4c83ff;">:sigma-r</span>
      (fnk
@@ -1291,45 +1354,56 @@ M_{max,mc2} = \cfrac{R_{c,mc2} I_{red,el}} {x_{el}}
             (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> Arc-red (pow (<span style="color: #D8FA3C;">-</span> x-el arc-red)  2))
                (<span style="color: #D8FA3C;">*</span> Ar-red  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar-red) 2))))))
 
+     [top-rebar bottom-rebar]
+     (fnk
+      [reinf]
+      (<span style="color: #D8FA3C;">map</span> reinf [<span style="color: #4c83ff;">:top</span> <span style="color: #4c83ff;">:bottom</span>]))
+
      <span style="color: #4c83ff;">:Ar-red</span>
      (fnk
-      [reinf <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-                      (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                         (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                            <span style="color: #919191;">Er</span>)))
-                    (<span style="color: #4c83ff;">:bottom</span> reinf))))
+      [bottom-rebar <span style="color: #919191;">Er</span>]
+      (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0)
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+                    (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                       (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                          <span style="color: #919191;">Er</span>)))
+                  bottom-rebar)))
 
      <span style="color: #4c83ff;">:Arc-red</span>
      (fnk
-      [reinf <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-                      (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                         (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                            <span style="color: #919191;">Er</span>)))
-                    (<span style="color: #4c83ff;">:top</span> reinf))))
+      [top-rebar <span style="color: #919191;">Er</span>]
+      (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0)
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+                    (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                       (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                          <span style="color: #919191;">Er</span>)))
+                  top-rebar)))
 
      <span style="color: #4c83ff;">:ar-red</span>
      (fnk
-      [reinf Ar-red <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
-                         (<span style="color: #D8FA3C;">*</span> ar
-                            n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                            (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                               <span style="color: #919191;">Er</span>)))
-                       (<span style="color: #4c83ff;">:bottom</span> reinf)))
+      [bottom-rebar Ar-red <span style="color: #919191;">Er</span>]
+      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (pow (si/cm 0) 3)
+              (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
+                     (<span style="color: #D8FA3C;">*</span> ar
+                        n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                        (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                           <span style="color: #919191;">Er</span>)))
+                   bottom-rebar))
          Ar-red))
 
      <span style="color: #4c83ff;">:arc-red</span>
      (fnk
-      [reinf Arc-red <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
+      [top-rebar Arc-red <span style="color: #919191;">Er</span>]
+      (<span style="color: #FF6400;">if</span> (zero? Arc-red)
+        (si/m 0)
+        (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (pow (si/cm 0) 3)
+                  (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
                          (<span style="color: #D8FA3C;">*</span> ar
                             n ((<span style="color: #4c83ff;">:A</span> rebar) d)
                             (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
                                <span style="color: #919191;">Er</span>)))
-                       (<span style="color: #4c83ff;">:top</span> reinf)))
-         Arc-red))
+                       top-rebar))
+           Arc-red)))
 
      <span style="color: #4c83ff;">:sigma-c</span>
      (fnk
@@ -1560,59 +1634,69 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
            (<span style="color: #D8FA3C;">*</span> -1 sigma-pc <span style="color: #919191;">Apc</span>))
         (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rc</span> b)))
 
-    <span style="color: #4c83ff;">:Ari</span>
+    <span style="color: #4c83ff;">:bottom-rebar</span>
     (fnk
      [reinf]
+     (<span style="color: #4c83ff;">:bottom</span> reinf))
+
+    <span style="color: #4c83ff;">:Ari</span>
+    (fnk
+     [bottom-rebar]
      (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
             (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-          (<span style="color: #4c83ff;">:bottom</span> reinf)))
+          bottom-rebar))
 
     <span style="color: #4c83ff;">:Rri</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:bottom</span> reinf)))
+     [bottom-rebar]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) bottom-rebar))
 
     <span style="color: #4c83ff;">:ari</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:bottom</span> reinf)))
+     [bottom-rebar]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> bottom-rebar))
 
     <span style="color: #4c83ff;">:Ar</span>
     (fnk
      [<span style="color: #919191;">Ari</span>]
-     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Ari</span>))
+     (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0) <span style="color: #919191;">Ari</span>))
+
+    <span style="color: #4c83ff;">:top-rebar</span>
+    (fnk
+     [reinf]
+     (<span style="color: #4c83ff;">:top</span> reinf))
 
     <span style="color: #4c83ff;">:Arci</span>
     (fnk
-     [reinf]
+     [top-rebar]
      (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
             (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)))
-          (<span style="color: #4c83ff;">:top</span> reinf)))
+          top-rebar))
 
     <span style="color: #4c83ff;">:Rrci</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) (<span style="color: #4c83ff;">:top</span> reinf)))
+     [top-rebar]
+     (<span style="color: #D8FA3C;">map</span> #(<span style="color: #D8FA3C;">get-in</span> % [<span style="color: #4c83ff;">:rebar</span> <span style="color: #4c83ff;">:Rr</span>]) top-rebar))
 
     <span style="color: #4c83ff;">:arci</span>
     (fnk
-     [reinf]
-     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> (<span style="color: #4c83ff;">:top</span> reinf)))
+     [top-rebar]
+     (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:ar</span> top-rebar))
 
     <span style="color: #4c83ff;">:Arc</span>
     (fnk
      [<span style="color: #919191;">Arci</span>]
-     (<span style="color: #D8FA3C;">apply</span> + <span style="color: #919191;">Arci</span>))
+     (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0) <span style="color: #919191;">Arci</span>))
 
     <span style="color: #4c83ff;">:Nr</span>
     (fnk
      [<span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>]
-     (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
+     (<span style="color: #D8FA3C;">apply</span> + (si/N 0) (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Ari</span> <span style="color: #919191;">Rri</span>)))
 
     <span style="color: #4c83ff;">:Nrc</span>
     (fnk
       [<span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>]
-      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>)))
+      (<span style="color: #D8FA3C;">apply</span> + (si/N 0) (<span style="color: #D8FA3C;">map</span> * <span style="color: #919191;">Arci</span> <span style="color: #919191;">Rrci</span>)))
 
     <span style="color: #4c83ff;">:ar</span>
     (fnk
@@ -1657,6 +1741,19 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
      [<span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span> <span style="color: #919191;">Nr</span> h0 arc]
      (<span style="color: #D8FA3C;">*</span> (<span style="color: #D8FA3C;">+</span> <span style="color: #919191;">Nr</span> (<span style="color: #D8FA3C;">*</span> <span style="color: #919191;">Rp</span> <span style="color: #919191;">Ap</span>))
         (<span style="color: #D8FA3C;">-</span> h0 arc)))
+
+    <span style="color: #4c83ff;">:Ap</span>  (fnk [] ((pow si/m 2) 0))
+    <span style="color: #4c83ff;">:Apc</span> (fnk [] ((pow si/m 2) 0))
+
+    <span style="color: #4c83ff;">:Rp</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+    <span style="color: #4c83ff;">:Rpc</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 500))
+
+    <span style="color: #4c83ff;">:ap</span> (fnk [] (si/m 0))
+    <span style="color: #4c83ff;">:apc</span> (fnk [] (si/m 0))
+
+    <span style="color: #4c83ff;">:sigma-pc1</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+    <span style="color: #4c83ff;">:sigma-p</span> (fnk [] (si/<span style="color: #919191;">MPa</span> 0))
+
     }))
 (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-bending-flow</span>
   (<span style="color: #D8FA3C;">merge</span> rect-bending-flow
@@ -1708,11 +1805,10 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
 
      <span style="color: #4c83ff;">:R-cr</span>
      (fnk
-      [A-cr reinf]
-      (<span style="color: #FF6400;">let</span> [r (<span style="color: #4c83ff;">:bottom</span> reinf)
-            d (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:d</span> r)
-            n (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:n</span> r)
-            beta-cr (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:beta-cr</span> r)]
+      [A-cr bottom-rebar]
+      (<span style="color: #FF6400;">let</span> [d (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:d</span> bottom-rebar)
+            n (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:n</span> bottom-rebar)
+            beta-cr (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:beta-cr</span> bottom-rebar)]
         (<span style="color: #D8FA3C;">/</span> A-cr
            (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> * beta-cr d n)))))
 
@@ -1728,16 +1824,17 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
            (<span style="color: #D8FA3C;">+</span> ar-cr (<span style="color: #D8FA3C;">*</span> 6 d-cr))))
 
      [ar-cr d-cr]
-     (fnk
-      [reinf]
-      (<span style="color: #FF6400;">let</span> [rb (<span style="color: #4c83ff;">:bottom</span> reinf)
-            rb (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [rebar n d] <span style="color: #4c83ff;">:as</span> row}]
-                      (<span style="color: #D8FA3C;">assoc</span> row <span style="color: #4c83ff;">:Ar</span> (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d))))
-                    rb)
-            Ar-max (<span style="color: #D8FA3C;">apply</span> max (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:Ar</span> rb))]
-        (<span style="color: #D8FA3C;">map</span> (<span style="color: #D8FA3C;">apply</span> max-key <span style="color: #4c83ff;">:ar</span> (<span style="color: #D8FA3C;">filter</span> #(<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:Ar</span> %) (<span style="color: #D8FA3C;">*</span> 0.5 Ar-max))
-                                        rb))
-             [<span style="color: #4c83ff;">:ar</span> <span style="color: #4c83ff;">:d</span>])))
+          (fnk
+           [bottom-rebar]
+           (<span style="color: #FF6400;">let</span> [rb bottom-rebar
+                 rb (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [rebar n d] <span style="color: #4c83ff;">:as</span> row}]
+                           (<span style="color: #D8FA3C;">assoc</span> row <span style="color: #4c83ff;">:Ar</span> (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d))))
+                         rb)
+                 Ar-max (<span style="color: #D8FA3C;">apply</span> max (<span style="color: #D8FA3C;">map</span> <span style="color: #4c83ff;">:Ar</span> rb))]
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #D8FA3C;">reduce</span> #(<span style="color: #FF6400;">if</span> (<span style="color: #D8FA3C;">&gt;</span> (<span style="color: #4c83ff;">:ar</span> %1) (<span style="color: #4c83ff;">:ar</span> %2)) %1 %2)
+                          (<span style="color: #D8FA3C;">filter</span> #(<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:Ar</span> %) (<span style="color: #D8FA3C;">*</span> 0.5 Ar-max))
+                                  rb))
+                  [<span style="color: #4c83ff;">:ar</span> <span style="color: #4c83ff;">:d</span>])))
 
      <span style="color: #4c83ff;">:sigma-r</span>
      (fnk
@@ -1770,45 +1867,56 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
             (<span style="color: #D8FA3C;">+</span> (<span style="color: #D8FA3C;">*</span> Arc-red (pow (<span style="color: #D8FA3C;">-</span> x-el arc-red)  2))
                (<span style="color: #D8FA3C;">*</span> Ar-red  (pow (<span style="color: #D8FA3C;">-</span> h x-el ar-red) 2))))))
 
+     [top-rebar bottom-rebar]
+     (fnk
+      [reinf]
+      (<span style="color: #D8FA3C;">map</span> reinf [<span style="color: #4c83ff;">:top</span> <span style="color: #4c83ff;">:bottom</span>]))
+
      <span style="color: #4c83ff;">:Ar-red</span>
      (fnk
-      [reinf <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-                      (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                         (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                            <span style="color: #919191;">Er</span>)))
-                    (<span style="color: #4c83ff;">:bottom</span> reinf))))
+      [bottom-rebar <span style="color: #919191;">Er</span>]
+      (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0)
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+                    (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                       (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                          <span style="color: #919191;">Er</span>)))
+                  bottom-rebar)))
 
      <span style="color: #4c83ff;">:Arc-red</span>
      (fnk
-      [reinf <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
-                      (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                         (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                            <span style="color: #919191;">Er</span>)))
-                    (<span style="color: #4c83ff;">:top</span> reinf))))
+      [top-rebar <span style="color: #919191;">Er</span>]
+      (<span style="color: #D8FA3C;">apply</span> + ((pow si/cm 2) 0)
+             (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar]}]
+                    (<span style="color: #D8FA3C;">*</span> n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                       (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                          <span style="color: #919191;">Er</span>)))
+                  top-rebar)))
 
      <span style="color: #4c83ff;">:ar-red</span>
      (fnk
-      [reinf Ar-red <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
-                         (<span style="color: #D8FA3C;">*</span> ar
-                            n ((<span style="color: #4c83ff;">:A</span> rebar) d)
-                            (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
-                               <span style="color: #919191;">Er</span>)))
-                       (<span style="color: #4c83ff;">:bottom</span> reinf)))
+      [bottom-rebar Ar-red <span style="color: #919191;">Er</span>]
+      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (pow (si/cm 0) 3)
+              (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
+                     (<span style="color: #D8FA3C;">*</span> ar
+                        n ((<span style="color: #4c83ff;">:A</span> rebar) d)
+                        (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
+                           <span style="color: #919191;">Er</span>)))
+                   bottom-rebar))
          Ar-red))
 
      <span style="color: #4c83ff;">:arc-red</span>
      (fnk
-      [reinf Arc-red <span style="color: #919191;">Er</span>]
-      (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
+      [top-rebar Arc-red <span style="color: #919191;">Er</span>]
+      (<span style="color: #FF6400;">if</span> (zero? Arc-red)
+        (si/m 0)
+        (<span style="color: #D8FA3C;">/</span> (<span style="color: #D8FA3C;">apply</span> + (pow (si/cm 0) 3)
+                  (<span style="color: #D8FA3C;">map</span> (<span style="color: #FBDE2D;">fn</span> [{<span style="color: #4c83ff;">:keys</span> [n d rebar ar]}]
                          (<span style="color: #D8FA3C;">*</span> ar
                             n ((<span style="color: #4c83ff;">:A</span> rebar) d)
                             (<span style="color: #D8FA3C;">/</span> (<span style="color: #4c83ff;">:Er</span> rebar)
                                <span style="color: #919191;">Er</span>)))
-                       (<span style="color: #4c83ff;">:top</span> reinf)))
-         Arc-red))
+                       top-rebar))
+           Arc-red)))
 
      <span style="color: #4c83ff;">:sigma-c</span>
      (fnk
@@ -1876,43 +1984,27 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
 <pre class="src src-clojure">(<span style="color: #FF6400;">let</span> [lazy-rect (lazy-compile (<span style="color: #D8FA3C;">merge</span> xi-flow rect-bending-flow))
       lazy-T    (lazy-compile (<span style="color: #D8FA3C;">merge</span> xi-flow T-bending-flow))]
 
+  (<span style="color: #FBDE2D;">defn</span> <span style="color: #ff1493;">cs-bending</span>
+    [flow input]
+    (<span style="color: #FF6400;">let</span> [no-<span style="color: #919191;">Arc</span>  (flow (<span style="color: #D8FA3C;">update-in</span> input [<span style="color: #4c83ff;">:reinf</span> <span style="color: #4c83ff;">:top</span>]
+                                   (<span style="color: #FBDE2D;">fn</span> [t] (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
+          all-<span style="color: #919191;">Arc</span> (flow input)
+          arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)]
+      (<span style="color: #FF6400;">cond</span>
+       (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+       (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
+       <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
+               <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc)))))
+
   (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">rect-bending</span>
     (fnk
      {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h reinf] <span style="color: #4c83ff;">:as</span> args}
-     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Ap</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:Apc</span> ((pow si/m 2) 0)
-                         <span style="color: #4c83ff;">:Rp</span>  (si/<span style="color: #919191;">MPa</span> 0) <span style="color: #4c83ff;">:Rpc</span> (si/<span style="color: #919191;">MPa</span> 500)
-                         <span style="color: #4c83ff;">:ap</span> (si/m 0) <span style="color: #4c83ff;">:apc</span> (si/m 0)
-                         <span style="color: #4c83ff;">:sigma-pc1</span> (si/<span style="color: #919191;">MPa</span> 0)
-                         <span style="color: #4c83ff;">:sigma-p</span> (si/<span style="color: #919191;">MPa</span> 0)}
-                        args)
-           no-<span style="color: #919191;">Arc</span>  (lazy-rect (<span style="color: #D8FA3C;">update-in</span> input [<span style="color: #4c83ff;">:reinf</span> <span style="color: #4c83ff;">:top</span>]
-                                         (<span style="color: #FBDE2D;">fn</span> [t] (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
-           all-<span style="color: #919191;">Arc</span> (lazy-rect input)
-           arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)]
-       (<span style="color: #FF6400;">cond</span>
-        (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-        (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-        <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
-                <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc))))))
+     (cs-bending lazy-rect args)))
 
   (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">T-bending</span>
     (fnk
      {<span style="color: #4c83ff;">:keys</span> [<span style="color: #919191;">Rc</span> b h bf hf reinf] <span style="color: #4c83ff;">:as</span> args}
-     (<span style="color: #FF6400;">let</span> [input (<span style="color: #D8FA3C;">merge</span> {<span style="color: #4c83ff;">:Ap</span> ((pow si/m 2) 0) <span style="color: #4c83ff;">:Apc</span> ((pow si/m 2) 0)
-                         <span style="color: #4c83ff;">:Rp</span>  (si/<span style="color: #919191;">MPa</span> 0) <span style="color: #4c83ff;">:Rpc</span> (si/<span style="color: #919191;">MPa</span> 500)
-                         <span style="color: #4c83ff;">:ap</span> (si/m 0) <span style="color: #4c83ff;">:apc</span> (si/m 0)
-                         <span style="color: #4c83ff;">:sigma-pc1</span> (si/<span style="color: #919191;">MPa</span> 0)
-                         <span style="color: #4c83ff;">:sigma-p</span> (si/<span style="color: #919191;">MPa</span> 0)}
-                        args)
-           no-<span style="color: #919191;">Arc</span>  (lazy-T (<span style="color: #D8FA3C;">update-in</span> input [<span style="color: #4c83ff;">:reinf</span> <span style="color: #4c83ff;">:top</span>]
-                                         (<span style="color: #FBDE2D;">fn</span> [t] (mapv #(<span style="color: #D8FA3C;">assoc</span> % <span style="color: #4c83ff;">:n</span> 0) t))))
-           all-<span style="color: #919191;">Arc</span> (lazy-T input)
-           arc (<span style="color: #4c83ff;">:arc</span> all-<span style="color: #919191;">Arc</span>)]
-       (<span style="color: #FF6400;">cond</span>
-        (<span style="color: #D8FA3C;">&lt;</span>  (<span style="color: #4c83ff;">:x</span> no-<span style="color: #919191;">Arc</span>) (<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span>  no-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-        (<span style="color: #D8FA3C;">&gt;=</span> (<span style="color: #4c83ff;">:x</span> all-<span style="color: #919191;">Arc</span>)(<span style="color: #D8FA3C;">*</span> 2 arc)) (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max-sc</span>)
-        <span style="color: #4c83ff;">:else</span> (<span style="color: #D8FA3C;">assoc</span> (<span style="color: #D8FA3C;">dissoc</span> all-<span style="color: #919191;">Arc</span> <span style="color: #4c83ff;">:M-max</span>)
-                <span style="color: #4c83ff;">:x</span> (<span style="color: #D8FA3C;">*</span> 2 arc))))))
+     (cs-bending lazy-T args)))
 
   (<span style="color: #FBDE2D;">def</span> <span style="color: #ff1493;">bending</span>
     (fnk
@@ -1969,7 +2061,7 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2014-01-22 �� 13:47</p>
+<p class="date">Created: 2014-01-23 �� 14:12</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.0)</p>
 <p class="xhtml-validation"><a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a></p>
 </div>
