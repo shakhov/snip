@@ -81,83 +81,65 @@
            (* -1 sigma-pc Apc))
         (* Rc b)))
     
-    :bottom-rebar
-    (fnk
-     [reinf]
-     (:bottom reinf))
-    
-    :Ari
-    (fnk
-     [bottom-rebar]
-     (map (fn [{:keys [n d rebar]}]
-            (* n ((:A rebar) d)))
-          bottom-rebar))
-    
-    :Rri
-    (fnk
-     [bottom-rebar]
-     (map #(get-in % [:rebar :Rr]) bottom-rebar))
-    
-    :ari
-    (fnk
-     [bottom-rebar]
-     (map :ar bottom-rebar))
-    
     :Ar
     (fnk
-     [Ari]
-     (apply + ((pow si/cm 2) 0) Ari))
-    
-    :top-rebar
-    (fnk
-     [reinf]
-     (:top reinf))
-    
-    :Arci
-    (fnk
-     [top-rebar]
-     (map (fn [{:keys [n d rebar]}]
-            (* n ((:A rebar) d)))
-          top-rebar))
-    
-    :Rrci
-    (fnk
-     [top-rebar]
-     (map #(get-in % [:rebar :Rr]) top-rebar))
-    
-    :arci
-    (fnk
-     [top-rebar]
-     (map :ar top-rebar))
+     [bottom-rebar]
+     (apply + (pow (si/m 0) 2)
+            (map (fnk
+                  {:keys [n d] {:keys [A]} :rebar}
+                  (* n (A d)))
+                 bottom-rebar)))
     
     :Arc
     (fnk
-     [Arci]
-     (apply + ((pow si/cm 2) 0) Arci))
+     [top-rebar]
+     (apply + (pow (si/m 0) 2)
+            (map (fnk
+                  {:keys [n d] {:keys [A]} :rebar}
+                  (* n (A d)))
+                 top-rebar)))
     
     :Nr
     (fnk
-     [Ari Rri]
-     (apply + (si/N 0) (map * Ari Rri)))
+     [bottom-rebar]
+     (apply + (si/N 0)
+            (map (fnk
+                  {:keys [n d] {:keys [A Rr]} :rebar}
+                  (* n Rr (A d)))
+                 bottom-rebar)))
     
     :Nrc
     (fnk
-      [Arci Rrci]
-      (apply + (si/N 0) (map * Arci Rrci)))
+     [top-rebar]
+     (apply + (si/N 0)
+            (map (fnk
+                  {:keys [n d] {:keys [A Rr]} :rebar}
+                  (* n Rr (A d)))
+                 top-rebar)))
     
     :ar
     (fnk
-     [Nr Ari Rri ari]
-     (/ (apply + (map * Ari Rri ari))
-        Nr))
+     [Nr bottom-rebar]
+     (if (zero? Nr)
+       (si/m 0)
+       (/ (apply + (* si/N si/m)
+                 (map (fnk
+                       {:keys [ar n d] {:keys [A Rr]} :rebar}
+                       (* ar n Rr (A d)))
+                      bottom-rebar))
+          Nr)))
     
     :arc
     (fnk
-     [Nrc Arci Rrci arci]
-     (if (zero? Nrc)
-       (si/cm 0)
-       (/ (apply + (map * Arci Rrci arci))
-          Nrc)))
+     [Nr top-rebar]
+     (if (zero? Nr)
+       (si/m 0)
+       (/ (apply + (* si/N si/m)
+                 (map (fnk
+                       {:keys [ar n d] {:keys [A Rr]} :rebar}
+                       (* ar n Rr (A d)))
+                     top-rebar))
+          Nr)))
     
     :h01
     (fnk
@@ -201,6 +183,7 @@
     :sigma-pc1 (fnk [] (si/MPa 0))
     :sigma-p (fnk [] (si/MPa 0))
     
+    :top-rebar (fnk [] [])
     }))
 (def T-bending-flow
   (merge rect-bending-flow
@@ -253,11 +236,12 @@
      :R-cr
      (fnk
       [A-cr bottom-rebar]
-      (let [d (map :d bottom-rebar)
-            n (map :n bottom-rebar)
-            beta-cr (map :beta-cr bottom-rebar)]
-        (/ A-cr
-           (apply + (map * beta-cr d n)))))
+      (/ A-cr
+         (apply + (si/m 0)
+                (map (fnk
+                      {:keys [d n beta-cr]}
+                      (* beta-cr d n))
+                     bottom-rebar))))
      
      :A-cr
      (fnk
@@ -271,17 +255,19 @@
            (+ ar-cr (* 6 d-cr))))
      
      [ar-cr d-cr]
-          (fnk
-           [bottom-rebar]
-           (let [rb bottom-rebar
-                 rb (map (fn [{:keys [rebar n d] :as row}]
-                           (assoc row :Ar (* n ((:A rebar) d))))
-                         rb)
-                 Ar-max (apply max (map :Ar rb))]
-             (map (reduce #(if (> (:ar %1) (:ar %2)) %1 %2)
-                          (filter #(>= (:Ar %) (* 0.5 Ar-max))
-                                  rb))
-                  [:ar :d])))
+     (fnk
+      [bottom-rebar]
+      (let [Ari (map (fnk
+                      {:keys [n d] {:keys [A]} :rebar :as row}
+                      (* n (A d)))
+                     bottom-rebar)
+            Ar-max (apply max Ari)
+            bottom-rebar (map #(assoc %1 :Ar %2)
+                              bottom-rebar Ari)]
+        (map (reduce #(if (> (:ar %1) (:ar %2)) %1 %2)
+                     (filter #(>= (:Ar %) (* 0.5 Ar-max))
+                             bottom-rebar))
+             [:ar :d])))
      
      :sigma-r
      (fnk
@@ -314,54 +300,49 @@
             (+ (* Arc-red (pow (- x-el arc-red)  2))
                (* Ar-red  (pow (- h x-el ar-red) 2))))))
      
-     [top-rebar bottom-rebar]
-     (fnk
-      [reinf]
-      (map reinf [:top :bottom]))
-     
      :Ar-red
      (fnk
       [bottom-rebar Er]
-      (apply + ((pow si/cm 2) 0)
-             (map (fn [{:keys [n d rebar]}]
-                    (* n ((:A rebar) d)
-                       (/ (:Er rebar)
-                          Er)))
+      (apply + (pow (si/m 0) 2)
+             (map (fnk
+                   {:keys [n d] {A :A Er' :Er} :rebar}
+                   (* n (A d)
+                       (/ Er' Er)))
                   bottom-rebar)))
      
      :Arc-red
      (fnk
       [top-rebar Er]
-      (apply + ((pow si/cm 2) 0)
-             (map (fn [{:keys [n d rebar]}]
-                    (* n ((:A rebar) d)
-                       (/ (:Er rebar)
-                          Er)))
+      (apply + (pow (si/m 0) 2)
+             (map (fnk
+                   {:keys [n d] {A :A Er' :Er} :rebar}
+                   (* n (A d)
+                       (/ Er' Er)))
                   top-rebar)))
      
      :ar-red
      (fnk
       [bottom-rebar Ar-red Er]
-      (/ (apply + (pow (si/cm 0) 3)
-              (map (fn [{:keys [n d rebar ar]}]
-                     (* ar
-                        n ((:A rebar) d)
-                        (/ (:Er rebar)
-                           Er)))
-                   bottom-rebar))
-         Ar-red))
+      (if (zero? Ar-red)
+        (si/m 0)
+        (/ (apply + (pow (si/m 0) 3)
+                  (map (fnk
+                        {:keys [n d ar] {A :A Er' :Er} :rebar}
+                        (* ar n (A d)
+                           (/ Er' Er)))
+                       bottom-rebar))
+           Ar-red)))
      
      :arc-red
      (fnk
       [top-rebar Arc-red Er]
       (if (zero? Arc-red)
         (si/m 0)
-        (/ (apply + (pow (si/cm 0) 3)
-                  (map (fn [{:keys [n d rebar ar]}]
-                         (* ar
-                            n ((:A rebar) d)
-                            (/ (:Er rebar)
-                               Er)))
+        (/ (apply + (pow (si/m 0) 3)
+                  (map (fnk
+                        {:keys [n d ar] {A :A Er' :Er} :rebar}
+                        (* ar n (A d)
+                           (/ Er' Er)))
                        top-rebar))
            Arc-red)))
      
@@ -417,7 +398,7 @@
 
   (defn cs-bending
     [flow input]
-    (let [no-Arc  (flow (update-in input [:reinf :top]
+    (let [no-Arc  (flow (update-in input [:top-rebar]
                                    (fn [t] (mapv #(assoc % :n 0) t))))
           all-Arc (flow input)
           arc (:arc all-Arc)]
@@ -429,17 +410,17 @@
 
   (def rect-bending
     (fnk
-     {:keys [Rc b h reinf] :as args}
+     {:keys [Rc b h bottom-rebar] :as args}
      (cs-bending lazy-rect args)))
 
   (def T-bending
     (fnk
-     {:keys [Rc b h bf hf reinf] :as args}
+     {:keys [Rc b h bf hf bottom-rebar] :as args}
      (cs-bending lazy-T args)))
 
   (def bending
     (fnk
-     {:keys [Rc b h reinf] :as args}
+     {:keys [Rc b h bottom-rebar] :as args}
      (if (and (:hf args)
               (:bf args))
        (let [as-rect (rect-bending (assoc args :b (:bf args)))
@@ -454,17 +435,17 @@
 
   (def rect-cracking
     (fnk
-     {:keys [h b reinf Er Rc-mc2] :as args}
+     {:keys [h b bottom-rebar Er Rc-mc2] :as args}
      (lazy-rect-cracking args)))
 
   (def T-cracking
     (fnk
-     {:keys [h b hf bf reinf Er Rc-mc2] :as args}
+     {:keys [h b hf bf bottom-rebar Er Rc-mc2] :as args}
      (lazy-T-cracking args)))
 
   (def cracking
     (fnk
-     {:keys [h b reinf Er Rc-mc2] :as args}
+     {:keys [h b bottom-rebar Er Rc-mc2] :as args}
      (if (and (:hf args)
               (:bf args))
        (let [as-rect (rect-cracking (assoc args :b (:bf args)))

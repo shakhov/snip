@@ -122,18 +122,18 @@
   (apply test-II cs))
 
 (comment
-  (merge {:h (si/cm 76)
-          :b (si/cm 156)
-          :reinf {:bottom [{:rebar rebar/AIII
-                            :ar (si/mm 70)
-                            :d (si/mm 18)
-                            :n 10
-                            :beta-cr 1.0}]
-                  :top [{:rebar rebar/AIII
-                         :ar (si/mm 70)
-                         :d (si/mm 20)
-                         :n 10
-                         :beta-cr 1.0}]}}
-         rebar/AIII concrete/B30
-
-         {:delta-cr (si/cm 0.02)}))
+  (test-all
+   (merge {:h (si/cm 76)
+           :b (si/cm 156)
+           :bottom-rebar [{:rebar rebar/AIII
+                           :ar (si/mm 70)
+                           :d (si/mm 18)
+                           :n 10
+                           :beta-cr 1.0}]
+           :top-rebar [{:rebar rebar/AIII
+                        :ar (si/mm 70)
+                        :d (si/mm 20)
+                        :n 10
+                        :beta-cr 1.0}]}
+          rebar/AIII concrete/B30
+          {:delta-cr (si/cm 0.02)})))

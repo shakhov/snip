@@ -128,68 +128,27 @@ x = \frac{R_p A_p + N_r - N_{rc} - \sigma_{pc} A_{pc}} {R_c b}
       (* Rc b)))
 #+end_src
 
-**** Растянутая арматура
-Параметры растянутой арматуры извлекаются из структуры исходных данных
+**** Площадь арматуры
+Параметры арматуры извлекаются из структуры исходных данных
 
 #+begin_src clojure
-  :bottom-rebar
-  (fnk
-   [reinf]
-   (:bottom reinf))
-
-  :Ari
-  (fnk
-   [bottom-rebar]
-   (map (fn [{:keys [n d rebar]}]
-          (* n ((:A rebar) d)))
-        bottom-rebar))
-
-  :Rri
-  (fnk
-   [bottom-rebar]
-   (map #(get-in % [:rebar :Rr]) bottom-rebar))
-
-  :ari
-  (fnk
-   [bottom-rebar]
-   (map :ar bottom-rebar))
-
   :Ar
   (fnk
-   [Ari]
-   (apply + ((pow si/cm 2) 0) Ari))
-#+end_src
-
-**** Учитываемая сжатая араматура
-Параметры сжатой арматуры извлекаются из структуры исходных данных
-
-#+begin_src clojure
-  :top-rebar
-  (fnk
-   [reinf]
-   (:top reinf))
-
-  :Arci
-  (fnk
-   [top-rebar]
-   (map (fn [{:keys [n d rebar]}]
-          (* n ((:A rebar) d)))
-        top-rebar))
-
-  :Rrci
-  (fnk
-   [top-rebar]
-   (map #(get-in % [:rebar :Rr]) top-rebar))
-
-  :arci
-  (fnk
-   [top-rebar]
-   (map :ar top-rebar))
+   [bottom-rebar]
+   (apply + (pow (si/m 0) 2)
+          (map (fnk
+                {:keys [n d] {:keys [A]} :rebar}
+                (* n (A d)))
+               bottom-rebar)))
 
   :Arc
   (fnk
-   [Arci]
-   (apply + ((pow si/cm 2) 0) Arci))
+   [top-rebar]
+   (apply + (pow (si/m 0) 2)
+          (map (fnk
+                {:keys [n d] {:keys [A]} :rebar}
+                (* n (A d)))
+               top-rebar)))
 #+end_src
 
 **** $N_r$ --- равнодействующая усилий в растянутой ненапрягаемой арматуре
@@ -201,8 +160,12 @@ N_r = \sum\limits_i A_{r,i} R_{r,i}
 #+begin_src clojure
   :Nr
   (fnk
-   [Ari Rri]
-   (apply + (si/N 0) (map * Ari Rri)))
+   [bottom-rebar]
+   (apply + (si/N 0)
+          (map (fnk
+                {:keys [n d] {:keys [A Rr]} :rebar}
+                (* n Rr (A d)))
+               bottom-rebar)))
 #+end_src
 
 **** $N_{rc}$ --- равнодействующая усилий в учитываемой сжатой ненапрягаемой арматуре
@@ -212,10 +175,14 @@ N_{rc} = \sum\limits_i A_{rc,i} R_{rc,i}
 \end{equation}
 
 #+begin_src clojure
- :Nrc
- (fnk
-   [Arci Rrci]
-   (apply + (si/N 0) (map * Arci Rrci)))
+  :Nrc
+  (fnk
+   [top-rebar]
+   (apply + (si/N 0)
+          (map (fnk
+                {:keys [n d] {:keys [A Rr]} :rebar}
+                (* n Rr (A d)))
+               top-rebar)))
 #+end_src
 
 **** Центр тяжести сжатой и растянутой арматуры
@@ -227,9 +194,15 @@ a_r = \cfrac{\sum_i A_{r,i}R_{r,i} a_{r,i}}{N_r}
 #+begin_src clojure
   :ar
   (fnk
-   [Nr Ari Rri ari]
-   (/ (apply + (map * Ari Rri ari))
-      Nr))
+   [Nr bottom-rebar]
+   (if (zero? Nr)
+     (si/m 0)
+     (/ (apply + (* si/N si/m)
+               (map (fnk
+                     {:keys [ar n d] {:keys [A Rr]} :rebar}
+                     (* ar n Rr (A d)))
+                    bottom-rebar))
+        Nr)))
 #+end_src
 
 $a_{rc}$ --- расстояние от сжатой грани бетона до центра тяжести
@@ -240,11 +213,15 @@ a_{rc} = \cfrac{\sum_i A_{rc,i} R_{rc,i} a_{rc,i}} {N_{rc}}
 #+begin_src clojure
   :arc
   (fnk
-   [Nrc Arci Rrci arci]
-   (if (zero? Nrc)
-     (si/cm 0)
-     (/ (apply + (map * Arci Rrci arci))
-        Nrc)))
+   [Nr top-rebar]
+   (if (zero? Nr)
+     (si/m 0)
+     (/ (apply + (* si/N si/m)
+               (map (fnk
+                     {:keys [ar n d] {:keys [A Rr]} :rebar}
+                     (* ar n Rr (A d)))
+                   top-rebar))
+        Nr)))
 #+end_src
 
 **** $h_0$, $h_{01}$ --- рабочая высота сечения
@@ -328,6 +305,7 @@ M_{max,sc} = (R_p A_p + N_r) (h_0 - a_{rc})
   :sigma-pc1 (fnk [] (si/MPa 0))
   :sigma-p (fnk [] (si/MPa 0))
 
+  :top-rebar (fnk [] [])
 #+end_src
 
 **** Код потока
@@ -382,7 +360,6 @@ x = \frac{R_p A_p + N_r - N_{rc} - \sigma_{pc} A_{pc} - R_c h_f (b_f - b)} {R_c 
          (* -1 Rc hf (- bf b)))
       (* Rc b)))
 #+end_src
-
 
 **** Код потока
 #+begin_src clojure :noweb yes :noweb-ref T-bending-flow
@@ -463,11 +440,12 @@ R_{cr} = \cfrac{A_{cr}}{\sum \beta n d}
   :R-cr
   (fnk
    [A-cr bottom-rebar]
-   (let [d (map :d bottom-rebar)
-         n (map :n bottom-rebar)
-         beta-cr (map :beta-cr bottom-rebar)]
-     (/ A-cr
-        (apply + (map * beta-cr d n)))))
+   (/ A-cr
+      (apply + (si/m 0)
+             (map (fnk
+                   {:keys [d n beta-cr]}
+                   (* beta-cr d n))
+                  bottom-rebar))))
 #+end_src
 
 **** Площадь зоны взаимодействия $A_{cr}$
@@ -500,17 +478,19 @@ A_{cr} = b h_r = b (a_{r,cr} + 6d)
 
 #+begin_src clojure
   [ar-cr d-cr]
-       (fnk
-        [bottom-rebar]
-        (let [rb bottom-rebar
-              rb (map (fn [{:keys [rebar n d] :as row}]
-                        (assoc row :Ar (* n ((:A rebar) d))))
-                      rb)
-              Ar-max (apply max (map :Ar rb))]
-          (map (reduce #(if (> (:ar %1) (:ar %2)) %1 %2)
-                       (filter #(>= (:Ar %) (* 0.5 Ar-max))
-                               rb))
-               [:ar :d])))
+  (fnk
+   [bottom-rebar]
+   (let [Ari (map (fnk
+                   {:keys [n d] {:keys [A]} :rebar :as row}
+                   (* n (A d)))
+                  bottom-rebar)
+         Ar-max (apply max Ari)
+         bottom-rebar (map #(assoc %1 :Ar %2)
+                           bottom-rebar Ari)]
+     (map (reduce #(if (> (:ar %1) (:ar %2)) %1 %2)
+                  (filter #(>= (:Ar %) (* 0.5 Ar-max))
+                          bottom-rebar))
+          [:ar :d])))
 #+end_src
 
 **** Напряжения в растянутой арматуре $\sigma_r$
@@ -582,54 +562,49 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + n' \left(A_{rc,red} (x_{el} - a_{rc,red})^2
 
 Характеристики арматурных стержней приводятся к одному классу арматуры:
 #+begin_src clojure
-  [top-rebar bottom-rebar]
-  (fnk
-   [reinf]
-   (map reinf [:top :bottom]))
-
   :Ar-red
   (fnk
    [bottom-rebar Er]
-   (apply + ((pow si/cm 2) 0)
-          (map (fn [{:keys [n d rebar]}]
-                 (* n ((:A rebar) d)
-                    (/ (:Er rebar)
-                       Er)))
+   (apply + (pow (si/m 0) 2)
+          (map (fnk
+                {:keys [n d] {A :A Er' :Er} :rebar}
+                (* n (A d)
+                    (/ Er' Er)))
                bottom-rebar)))
 
   :Arc-red
   (fnk
    [top-rebar Er]
-   (apply + ((pow si/cm 2) 0)
-          (map (fn [{:keys [n d rebar]}]
-                 (* n ((:A rebar) d)
-                    (/ (:Er rebar)
-                       Er)))
+   (apply + (pow (si/m 0) 2)
+          (map (fnk
+                {:keys [n d] {A :A Er' :Er} :rebar}
+                (* n (A d)
+                    (/ Er' Er)))
                top-rebar)))
 
   :ar-red
   (fnk
    [bottom-rebar Ar-red Er]
-   (/ (apply + (pow (si/cm 0) 3)
-           (map (fn [{:keys [n d rebar ar]}]
-                  (* ar
-                     n ((:A rebar) d)
-                     (/ (:Er rebar)
-                        Er)))
-                bottom-rebar))
-      Ar-red))
+   (if (zero? Ar-red)
+     (si/m 0)
+     (/ (apply + (pow (si/m 0) 3)
+               (map (fnk
+                     {:keys [n d ar] {A :A Er' :Er} :rebar}
+                     (* ar n (A d)
+                        (/ Er' Er)))
+                    bottom-rebar))
+        Ar-red)))
 
   :arc-red
   (fnk
    [top-rebar Arc-red Er]
    (if (zero? Arc-red)
      (si/m 0)
-     (/ (apply + (pow (si/cm 0) 3)
-               (map (fn [{:keys [n d rebar ar]}]
-                      (* ar
-                         n ((:A rebar) d)
-                         (/ (:Er rebar)
-                            Er)))
+     (/ (apply + (pow (si/m 0) 3)
+               (map (fnk
+                     {:keys [n d ar] {A :A Er' :Er} :rebar}
+                     (* ar n (A d)
+                        (/ Er' Er)))
                     top-rebar))
         Arc-red)))
 #+end_src
@@ -787,7 +762,7 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
 
     (defn cs-bending
       [flow input]
-      (let [no-Arc  (flow (update-in input [:reinf :top]
+      (let [no-Arc  (flow (update-in input [:top-rebar]
                                      (fn [t] (mapv #(assoc % :n 0) t))))
             all-Arc (flow input)
             arc (:arc all-Arc)]
@@ -799,17 +774,17 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
 
     (def rect-bending
       (fnk
-       {:keys [Rc b h reinf] :as args}
+       {:keys [Rc b h bottom-rebar] :as args}
        (cs-bending lazy-rect args)))
 
     (def T-bending
       (fnk
-       {:keys [Rc b h bf hf reinf] :as args}
+       {:keys [Rc b h bf hf bottom-rebar] :as args}
        (cs-bending lazy-T args)))
 
     (def bending
       (fnk
-       {:keys [Rc b h reinf] :as args}
+       {:keys [Rc b h bottom-rebar] :as args}
        (if (and (:hf args)
                 (:bf args))
          (let [as-rect (rect-bending (assoc args :b (:bf args)))
@@ -829,17 +804,17 @@ I_{red,el} = \cfrac{b x_{el}^3}{3} + \cfrac{(b_f - b) h_f^3}{12}
 
     (def rect-cracking
       (fnk
-       {:keys [h b reinf Er Rc-mc2] :as args}
+       {:keys [h b bottom-rebar Er Rc-mc2] :as args}
        (lazy-rect-cracking args)))
 
     (def T-cracking
       (fnk
-       {:keys [h b hf bf reinf Er Rc-mc2] :as args}
+       {:keys [h b hf bf bottom-rebar Er Rc-mc2] :as args}
        (lazy-T-cracking args)))
 
     (def cracking
       (fnk
-       {:keys [h b reinf Er Rc-mc2] :as args}
+       {:keys [h b bottom-rebar Er Rc-mc2] :as args}
        (if (and (:hf args)
                 (:bf args))
          (let [as-rect (rect-cracking (assoc args :b (:bf args)))
