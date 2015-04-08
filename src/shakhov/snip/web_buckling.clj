@@ -357,10 +357,10 @@
          :welded (table-12 mu gamma)))
 
      :tau-xy-cr-ef tau-xy-cr-ef-13
-     :chi-tau
+    :chi-tau
      (fnk
-       [mu gamma]
-       (/ (+ 1 (chi-tau {:mu mu :gamma gamma}))
+       [mu gamma connection]
+       (/ (+ 1 (chi-tau {:mu mu :gamma gamma :connection connection}))
           2))
 
      :sigma-x-cr sigma-x-cr
@@ -408,7 +408,8 @@
   (merge three-cells-outer-compression
          {:chi-x (fnk [] 1.0)
           :chi-y (fnk [] 1.0)
-          :chi-tau (fnk [] 1.0)}))
+          :chi-tau (fnk [] 1.0)
+          :gamma (fnk [] 0.0)}))
 
 (def three-cells-inner-tension-compression
   (merge two-cells-tension
@@ -566,22 +567,3 @@
                      (* 3 (pow v 2)
                         (- 1 (* 2/3 v))
                         (atan alpha)))))))))}))
-
-(def web-buckling
-  (fnk
-    [cells hw]
-    (let [cells (reduce (fn [r c]
-                          (let [z1 (:z2 (peek r))
-                                z2 (+ z1 (:h-ef c))]
-                            (conj r (assoc c :z1 z1 :z2 z2))))
-                        [(assoc (first cells)
-                                :z1 (- (/ hw 2))
-                                :z2 (+ (- (/ hw 2)) (:h-ef (first cells))))]
-                        (rest cells))]
-      (map-indexed (fn [i c]
-                     (assoc c :position
-                            (cond
-                              (= 0 i) :top
-                              (= i (dec (count cells))) :bottom
-                              :else :inner)))
-                   cells))))
